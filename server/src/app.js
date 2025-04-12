@@ -23,6 +23,7 @@ import userRoute from "./routes/user.route.js";
 // routes declearation
 
 app.use("/api/v1/users", authRoute);
+app.use("/api/v1/users", userRoute);
 
 
 // http://localhost:3000/api/v1/users/register

@@ -21,7 +21,7 @@ const generateAccessTokenRefreshtoken = async (userId) => {
         const refreshToken = user.generateRefreshToken();
 
         user.refreshToken = refreshToken;
-        await user.save({ validateBeforeSave: false });
+        await user.save({ validateBeforeSave : false });
 
         return { accessToken, refreshToken };
     } catch (error) {
@@ -135,23 +135,22 @@ const logOutUser = asyncHandler(async (req, res) => {
 
 // Refresh token when access token is expired
 const refreshAccessToken = asyncHandler(async (req, res) => {
-    const incommingRefreshToken = req.cookies.refreshToken || req.body.refreshToken;
+    const incomingRefreshToken = req.cookies.refreshToken || req.body.refreshToken;
 
-    console.log(incommingRefreshToken);
-    if (!incommingRefreshToken) {
+    if (!incomingRefreshToken) {
         throw new ApiError(401, "Unathorized request")
     }
 
     try {
-        const decodedToken = jwt.sign(incommingRefreshToken, process.env.REFRESH_TOKEN_SECRET);
+        const decodedToken = jwt.verify(incomingRefreshToken, process.env.REFRESH_TOKEN_SECRET);
 
         const user = await User.findById(decodedToken?._id)
-
+        console.log(user)
         if (!user) {
             throw new ApiError(401, "Invalid refresh token")
         }
 
-        if (incommingRefreshToken !== user?.refreshToken) {
+        if (incomingRefreshToken !== user?.refreshToken) {
             throw new ApiError(401, "Refresh token is expired or used")
         }
 

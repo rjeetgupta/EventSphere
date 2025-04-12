@@ -2,6 +2,7 @@ import User from "../models/user.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import { changePasswordValidator } from "../validations/passwordValidator.js";
 
 const getUser = asyncHandler(async (req, res) => {
     return res
@@ -18,10 +19,11 @@ const getUser = asyncHandler(async (req, res) => {
 const changeCurrentPassword = asyncHandler(async (req, res) => {
     const { oldPassword, newPassword } = req.body
 
+    changePasswordValidator(req.body);
+
     const user = await User.findById(req.user._id);
 
     const isPasswordCorrect = await user.isPasswordCorrect(oldPassword);
-
     if (!isPasswordCorrect) {
         throw new ApiError(400, "Old password is incorrect");
     }
@@ -42,13 +44,13 @@ const changeCurrentPassword = asyncHandler(async (req, res) => {
 })
 
 const updateUserProfile = asyncHandler(async (req, res) => {
-    const { fullName, email } = req.body;
+    const { name, email } = req.body;
 
     const user = await User.findByIdAndUpdate(
         req.user?._id,
         {
             $set: {
-                name: fullName,
+                name: name,
                 email: email,
             }
         },
