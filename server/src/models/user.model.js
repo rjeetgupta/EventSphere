@@ -27,12 +27,25 @@ const userSchema = new Schema({
 
     role: {
         type: String,
-        enum: ["user", "organizer", "admin"],
-        default: "user"
+        enum: ["admin", "club", "student"],
+        default: "student",
     },
-    club: {
-        type: Schema.Types.ObjectId,
-        ref: "Club"
+    department: {
+        type: String,
+    },
+    year: {
+        type: Number,
+    },
+    avatar: {
+        type: String,
+    },
+    eventsAttended: {
+        type: Number,
+        default: 0
+    },
+    registeredEvents: {
+        type: Number,
+        default: 0
     },
 
 }, { timestamps: true })
