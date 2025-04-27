@@ -32,7 +32,7 @@ const generateAccessTokenRefreshtoken = async (userId) => {
 
 // User registration
 const registerUser = asyncHandler(async (req, res) => {
-    const { name, email, password } = req.body;
+    const { name, email, password, role, department, year } = req.body;
 
     const validationErrors = userRegistrationValidator(req.body);
 
@@ -46,7 +46,11 @@ const registerUser = asyncHandler(async (req, res) => {
     const user = await User.create({
         name,
         email,
-        password
+        password,
+        role,
+        department,
+        year,
+        avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}`
     });
 
     const createdUser = await User.findById(user._id).select("-password -refreshToken");
