@@ -2,109 +2,101 @@ import { Link } from 'react-router-dom';
 import { Calendar, Mail, Github, Instagram, Twitter } from 'lucide-react';
 
 const Footer = () => {
+  const quickLinks = [
+    { to: "/", label: "Home" },
+    { to: "/events", label: "Events" },
+    { to: "/login", label: "Login" },
+    { to: "/register", label: "Register" }
+  ];
+
+  const resources = [
+    { to: "#", label: "Help Center" },
+    { to: "#", label: "Terms of Service" },
+    { to: "#", label: "Privacy Policy" },
+    { to: "#", label: "FAQ" }
+  ];
+
+  const socialLinks = [
+    { href: "#", icon: <Twitter className="h-6 w-6 text-white hover:text-indigo-400" />, label: "Twitter" },
+    { href: "#", icon: <Instagram className="h-6 w-6 text-white hover:text-indigo-400" />, label: "Instagram" },
+    { href: "#", icon: <Github className="h-6 w-6 text-white hover:text-indigo-400" />, label: "GitHub" }
+  ];
+
   return (
-    <footer className="border-t bg-background">
-      <div className="container py-8 md:py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <Calendar className="h-6 w-6 text-primary" />
-              <span className="font-bold text-xl">CampusEvents</span>
+    <footer className="bg-neutral-900 text-white py-12">
+      <div className="container mx-auto px-6">
+        {/* Footer Grid: 4 Columns */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          {/* 1st Column - CampusEvents */}
+          <div>
+            <div className="flex items-center gap-3 mb-4">
+              <Calendar className="h-8 w-8 text-indigo-400" />
+              <span className="text-3xl font-semibold text-white">CampusEvents</span>
             </div>
-            <p className="text-muted-foreground text-sm">
-              The ultimate platform for managing and discovering campus events and activities.
+            <p className="text-lg text-neutral-400">
+              Discover, participate, and manage campus events and activities with ease. Stay updated with the latest happenings!
             </p>
           </div>
-          
+
+          {/* 2nd Column - Quick Links */}
           <div>
-            <h3 className="font-semibold text-lg mb-4">Quick Links</h3>
+            <h3 className="text-xl font-semibold mb-4 text-white">Quick Links</h3>
             <ul className="space-y-2">
-              <li>
-                <Link to="/" className="text-muted-foreground hover:text-foreground text-sm">
-                  Home
-                </Link>
-              </li>
-              <li>
-                <Link to="/events" className="text-muted-foreground hover:text-foreground text-sm">
-                  Events
-                </Link>
-              </li>
-              <li>
-                <Link to="/login" className="text-muted-foreground hover:text-foreground text-sm">
-                  Login
-                </Link>
-              </li>
-              <li>
-                <Link to="/register" className="text-muted-foreground hover:text-foreground text-sm">
-                  Register
-                </Link>
-              </li>
+              {quickLinks.map((link, index) => (
+                <li key={index}>
+                  <Link to={link.to} className="text-neutral-400 hover:text-indigo-400 transition-colors duration-300">
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
-          
+
+          {/* 3rd Column - Resources */}
           <div>
-            <h3 className="font-semibold text-lg mb-4">Resources</h3>
+            <h3 className="text-xl font-semibold mb-4 text-white">Resources</h3>
             <ul className="space-y-2">
-              <li>
-                <Link to="#" className="text-muted-foreground hover:text-foreground text-sm">
-                  Help Center
-                </Link>
-              </li>
-              <li>
-                <Link to="#" className="text-muted-foreground hover:text-foreground text-sm">
-                  Terms of Service
-                </Link>
-              </li>
-              <li>
-                <Link to="#" className="text-muted-foreground hover:text-foreground text-sm">
-                  Privacy Policy
-                </Link>
-              </li>
-              <li>
-                <Link to="#" className="text-muted-foreground hover:text-foreground text-sm">
-                  FAQ
-                </Link>
-              </li>
+              {resources.map((resource, index) => (
+                <li key={index}>
+                  <Link to={resource.to} className="text-neutral-400 hover:text-indigo-400 transition-colors duration-300">
+                    {resource.label}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
-          
+
+          {/* 4th Column - Follow Us & Contact */}
           <div>
-            <h3 className="font-semibold text-lg mb-4">Contact</h3>
-            <ul className="space-y-2">
-              <li className="flex items-center gap-2 text-muted-foreground text-sm">
-                <Mail className="h-4 w-4" />
-                <span>support@campusevents.com</span>
-              </li>
-            </ul>
-            <div className="flex items-center gap-4 mt-4">
-              <a href="#" className="text-muted-foreground hover:text-primary">
-                <Twitter className="h-5 w-5" />
-                <span className="sr-only">Twitter</span>
-              </a>
-              <a href="#" className="text-muted-foreground hover:text-primary">
-                <Instagram className="h-5 w-5" />
-                <span className="sr-only">Instagram</span>
-              </a>
-              <a href="#" className="text-muted-foreground hover:text-primary">
-                <Github className="h-5 w-5" />
-                <span className="sr-only">GitHub</span>
-              </a>
+            <h3 className="text-xl font-semibold mb-4 text-white">Follow Us</h3>
+            <div className="flex gap-6 mb-6">
+              {socialLinks.map((social, index) => (
+                <a key={index} href={social.href} className="hover:text-indigo-400 transition-all duration-300">
+                  {social.icon}
+                </a>
+              ))}
+            </div>
+            <h3 className="text-xl font-semibold mb-4 text-white">Contact</h3>
+            <div className="flex items-center gap-2 text-neutral-400 text-sm">
+              <Mail className="h-4 w-4" />
+              <span>support@campusevents.com</span>
             </div>
           </div>
         </div>
-        
-        <div className="border-t mt-8 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-sm text-muted-foreground">
+
+        {/* Footer Bottom Section - Copyright and Legal Links */}
+        <div className="border-t mt-14 border-neutral-700 pt-6 text-center flex justify-between">
+          <p className="text-md text-neutral-400">
             © {new Date().getFullYear()} CampusEvents. All rights reserved.
           </p>
-          <div className="flex items-center gap-4">
-            <Link to="#" className="text-sm text-muted-foreground hover:text-foreground">
+          <div className="flex justify-center gap-6 mt-4">
+            <Link to="#" className="text-md text-neutral-400 hover:text-indigo-400 transition-colors duration-300">
               Privacy
             </Link>
-            <Link to="#" className="text-sm text-muted-foreground hover:text-foreground">
+            <Link to="#" className="text-md text-neutral-400 hover:text-indigo-400 transition-colors duration-300">
               Terms
             </Link>
-            <Link to="#" className="text-sm text-muted-foreground hover:text-foreground">
+            <Link to="#" className="text-md text-neutral-400 hover:text-indigo-400 transition-colors duration-300">
               Cookies
             </Link>
           </div>
