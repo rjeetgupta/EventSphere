@@ -1,16 +1,16 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { 
-  Calendar, 
-  Menu, 
-  X, 
-  User, 
-  LogOut, 
-  Moon, 
-  Sun, 
+import {
+  Calendar,
+  Menu,
+  X,
+  User,
+  LogOut,
+  Moon,
+  Sun,
   Users,
   BarChart2,
-  Shield 
+  Shield
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -76,7 +76,7 @@ const Navbar = () => {
               <User className="mr-2 h-4 w-4" />
               Profile
             </DropdownMenuItem>
-            
+
             {user.role === 'admin' && (
               <>
                 <DropdownMenuSeparator />
@@ -99,7 +99,7 @@ const Navbar = () => {
                 </DropdownMenuItem>
               </>
             )}
-            
+
             {user.role === 'club' && (
               <>
                 <DropdownMenuSeparator />
@@ -118,7 +118,7 @@ const Navbar = () => {
                 </DropdownMenuItem>
               </>
             )}
-            
+
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout}>
               <LogOut className="mr-2 h-4 w-4" />
@@ -128,7 +128,7 @@ const Navbar = () => {
         </DropdownMenu>
       );
     }
-    
+
     return (
       <div className="flex items-center gap-2">
         <Button variant="ghost" onClick={() => navigate('/login')}>
@@ -152,7 +152,10 @@ const Navbar = () => {
             <Calendar className="h-6 w-6 text-primary" />
             <span className="font-bold text-xl">CampusEvents</span>
           </Link>
-          
+        </div>
+
+        <div className="flex items-center gap-2">
+
           <nav className="hidden md:flex items-center gap-6">
             {navLinks.map((link) => (
               <Link
@@ -169,9 +172,7 @@ const Navbar = () => {
               </Link>
             ))}
           </nav>
-        </div>
-        
-        <div className="flex items-center gap-2">
+
           <Button
             variant="ghost"
             size="icon"
@@ -185,9 +186,9 @@ const Navbar = () => {
             )}
             <span className="sr-only">Toggle theme</span>
           </Button>
-          
+
           <div className="hidden md:block">{renderAuthButtons()}</div>
-          
+
           <Button
             variant="ghost"
             size="icon"
@@ -202,7 +203,7 @@ const Navbar = () => {
           </Button>
         </div>
       </div>
-      
+
       {/* Mobile menu */}
       {mobileMenuOpen && (
         <div className="md:hidden border-t">
@@ -221,7 +222,7 @@ const Navbar = () => {
                 {link.name}
               </Link>
             ))}
-            
+
             <div className="mt-2 pt-4 border-t">
               {user ? (
                 <>
@@ -237,13 +238,13 @@ const Navbar = () => {
                       <p className="text-sm text-muted-foreground">{user.email}</p>
                     </div>
                   </div>
-                  
+
                   <div className="flex flex-col gap-2">
                     <Button variant="ghost" className="justify-start" onClick={() => navigate('/profile')}>
                       <User className="mr-2 h-4 w-4" />
                       Profile
                     </Button>
-                    
+
                     {user.role === 'admin' && (
                       <>
                         <Button variant="ghost" className="justify-start" onClick={() => navigate('/admin')}>
@@ -252,7 +253,7 @@ const Navbar = () => {
                         </Button>
                       </>
                     )}
-                    
+
                     {user.role === 'club' && (
                       <>
                         <Button variant="ghost" className="justify-start" onClick={() => navigate('/club')}>
@@ -261,7 +262,7 @@ const Navbar = () => {
                         </Button>
                       </>
                     )}
-                    
+
                     <Button variant="ghost" className="justify-start" onClick={handleLogout}>
                       <LogOut className="mr-2 h-4 w-4" />
                       Log out
