@@ -1,17 +1,33 @@
 import { Router } from "express";
-import { changeCurrentPassword, getUser, getUserByClub, updateUserProfile } from "../controllers/user.controller.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
-import { changePasswordValidator } from "../validations/passwordValidator.js";
-import { userRegistrationValidator } from "../validations/authValidator.js";
+import { checkRole } from "../middlewares/checkRole.middleware.js";
+import { ROLES } from "../middlewares/checkRole.middleware.js";
 import { validator } from "../middlewares/validator.middleware.js";
+import { changePasswordValidator } from "../validators/user.validator.js";
+
+import { 
+    getUser, 
+    changeCurrentPassword, 
+    updateUserProfile, 
+    getUserByClub,
+} from "../controllers/user.controller.js";
 
 const router = Router();
 
-router.route("/current-user").get(verifyJWT, getUser);
-router.route("/change-current-password")
-    .post(changePasswordValidator(), validator, verifyJWT, changeCurrentPassword);
-router.route("/user-profile-update")
-    .post(userRegistrationValidator(), validator, verifyJWT, updateUserProfile);
-router.route("/get-user-by-club").get(verifyJWT, getUserByClub);
+// Protected routes
+router.use(verifyJWT);
+
+
+// User profile routes
+router.route("/profile")
+    .get(getUser)
+    .patch(updateUserProfile);
+
+router.route("/change-password")
+    .post(changePasswordValidator, validator, changeCurrentPassword);
+
+// Club manager routes
+router.route("/club/:clubId")
+    .get(checkRole(ROLES.CLUB_MANAGER), getUserByClub);
 
 export default router;
