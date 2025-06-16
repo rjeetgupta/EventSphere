@@ -1,52 +1,61 @@
-import mongoose, { Schema, model } from "mongoose";
+import mongoose from 'mongoose';
+import { ROLES } from '../middlewares/checkRole.middleware.js';
 
-const clubSchema = new Schema({
-
+const clubSchema = new mongoose.Schema({
     name: {
         type: String,
-        required: true,
-        trim: true,
+        required: [true, 'Club name is required'],
+        unique: true,
+        trim: true
     },
-
     description: {
         type: String,
-        required: true,
+        required: [true, 'Club description is required'],
+        trim: true
     },
-    department: {
+    type: {
         type: String,
-        required: true,
+        enum: ['technical', 'cultural', 'sports', 'other'],
+        required: [true, 'Club type is required']
     },
-    logo: {
+    departmentName: {
         type: String,
-        required: true,
+        required: [true, 'Department name is required'],
+        enum: ['MBA', 'MCA', 'BCA', 'BBA', 'B.COM', 'B.SC', 'BA']
     },
-    president: {
+    manager: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-        required: true
+        ref: 'User',
+        required: false,
+        validate: {
+            validator: async function(managerId) {
+                if (!managerId) return true; // Allow null/undefined
+                const user = await mongoose.model('User').findById(managerId);
+                return user && user.role === ROLES.CLUB_MANAGER;
+            },
+            message: 'Club manager must be a user with ClubManager role'
+        }
     },
-    members: [
-        {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "User",
-        },
-    ],
-    membersCount: {
-        type: Number,
-        default: 0,
-    },
-    eventsHosted: {
-        type: Number,
-        default: 0,
-    },
-    status: {
-        type: String,
-        enum: ["active", "pending", "inactive"],
-        default: "pending",
+    isActive: {
+        type: Boolean,
+        default: true
     }
+}, {
+    timestamps: true
+});
 
-}, { timestamps: true });
+// Indexes for better query performance
+clubSchema.index({ departmentName: 1 });
+clubSchema.index({ manager: 1 });
+clubSchema.index({ type: 1 });
 
-const Club = model("Club", clubSchema);
+// Virtual for getting all events of the club
+clubSchema.virtual('events', {
+    ref: 'Event',
+    localField: '_id',
+    foreignField: 'club'
+});
 
-export default Club;
+const Club = mongoose.model('Club', clubSchema);
+
+export default Club; 
