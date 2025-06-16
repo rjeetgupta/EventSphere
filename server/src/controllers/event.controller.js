@@ -1,261 +1,313 @@
-import User from "../models/user.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import Event from "../models/event.model.js";
+import User from "../models/user.model.js";
+import { ROLES } from "../middlewares/checkRole.middleware.js";
 
-
-// Create Event (Admin and Club only)
+// Create a new event
 const createEvent = asyncHandler(async (req, res) => {
-    const { name, description, date, time, location, department, status } = req.body;
-
-    if(!name || !description || !date || !time || !location || !department) {
-        throw new ApiError(400, "Please provide all required fields");
-    }
-
-    const event = await Event.create({
-        name,
+    const {
+        title,
         description,
-        date,
-        time,
-        location,
-        department,
-        status: status || "upcoming"
+        startDate,
+        endDate,
+        venue,
+        capacity,
+        registrationDeadline,
+        category,
+        tags,
+        imageUrl
+    } = req.body;
+
+    // Create event
+    const event = await Event.create({
+        title,
+        description,
+        startDate,
+        endDate,
+        venue,
+        capacity,
+        registrationDeadline,
+        category,
+        tags,
+        imageUrl,
+        organizer: req.user._id
     });
 
-    res
+    return res
         .status(201)
         .json(
             new ApiResponse(
                 201,
-                "Event created successfully",
-                event
+                event,
+                "Event created successfully"
             )
         );
 });
 
-// Get all events
+// Get all events with filters
 const getEvents = asyncHandler(async (req, res) => {
-    const { department, status, search } = req.query;
+    const {
+        category,
+        startDate,
+        endDate,
+        search,
+        page = 1,
+        limit = 10
+    } = req.query;
 
-    let query = {};
-    if(department) {
-        query.department = department;
-    }
-    if(status) {
-        query.status = status;
-    }
+    const query = {};
 
-    if(search) {
+    // Apply filters
+    if (category) query.category = category;
+    if (startDate) query.startDate = { $gte: new Date(startDate) };
+    if (endDate) query.endDate = { $lte: new Date(endDate) };
+    if (search) {
         query.$or = [
-            { name: { $regex: search, $options: "i" } },
-            { description: { $regex: search, $options: "i" } }
+            { title: { $regex: search, $options: 'i' } },
+            { description: { $regex: search, $options: 'i' } }
         ];
     }
 
-    const events = await Event.find(query).sort({ date: 1 });
+    // Get events with pagination
+    const events = await Event.find(query)
+        .populate('organizer', 'name email')
+        .sort({ startDate: 1 })
+        .skip((page - 1) * limit)
+        .limit(limit);
 
-    res
+    // Get total count for pagination
+    const total = await Event.countDocuments(query);
+
+    return res
         .status(200)
         .json(
             new ApiResponse(
                 200,
-                "Events fetched successfully",
-                events
+                {
+                    events,
+                    total,
+                    page: parseInt(page),
+                    totalPages: Math.ceil(total / limit)
+                },
+                "Events retrieved successfully"
             )
         );
 });
 
-
-// Get events by ID
-
+// Get event by ID
 const getEventById = asyncHandler(async (req, res) => {
+    const event = await Event.findById(req.params.id)
+        .populate('organizer', 'name email')
+        .populate('registrations.user', 'name email');
 
-    // Verify the id which is passed in the params correct or not
-    const { id } = req.params;
-
-    if(!id) {
-        throw new ApiError(400, "Please provide an event ID");
-    }
-
-    const event = await Event.findById(id);
-
-    if(!event) {
+    if (!event) {
         throw new ApiError(404, "Event not found");
     }
 
-    res
+    return res
         .status(200)
         .json(
             new ApiResponse(
                 200,
-                "Event fetched successfully",
-                event
+                event,
+                "Event retrieved successfully"
             )
         );
 });
 
-const getEventDetails = asyncHandler(async (req, res) => {
+// Update event
+const updateEvent = asyncHandler(async (req, res) => {
+    const event = await Event.findById(req.params.id);
 
-});
-
-
-// Update Event (Admin and Club only)
-const updateEventDetails = asyncHandler(async (req, res) => {
-    const { id } = req.params;
-    const { name, description, date, time, location, department, status } = req.body;
-
-    // Check the given id is valid or not
-    if(!id) {
-        throw new ApiError(400, "Please provide an event ID");
-    }
-
-    const event = await Event.findById(id);
-
-    if(!event) {
+    if (!event) {
         throw new ApiError(404, "Event not found");
     }
 
-    // Check if user is authorized to update
-    if (req.user.role !== 'admin' && event.organizer.id.toString() !== req.user.userId) {
-        return res.status(403).json({ message: 'Not authorized' });
+    // Check if user is the organizer
+    if (event.organizer.toString() !== req.user._id.toString()) {
+        throw new ApiError(403, "Not authorized to update this event");
     }
-      
+
+    // Update event
     const updatedEvent = await Event.findByIdAndUpdate(
         req.params.id,
         { $set: req.body },
         { new: true }
     );
 
-    res
+    return res
         .status(200)
         .json(
             new ApiResponse(
                 200,
-                "Event updated successfully",
-                updatedEvent
+                updatedEvent,
+                "Event updated successfully"
             )
         );
 });
 
-
-// Delete Event (Admin and Club only)
+// Delete event
 const deleteEvent = asyncHandler(async (req, res) => {
-    const { id } = req.params;
+    const event = await Event.findById(req.params.id);
 
-    // Check the given id is valid or not
-    if(!id) {
-        throw new ApiError(400, "Please provide an event ID");
-    }
-
-    const event = await Event.findById(id);
-
-    if(!event) {
+    if (!event) {
         throw new ApiError(404, "Event not found");
     }
 
-    // Check if user is authorized to delete
-    if (req.user.role !== 'admin' && event.organizer.id.toString() !== req.user.userId) {
-        return res.status(403).json({ message: 'Not authorized' });
+    // Check if user is the organizer
+    if (event.organizer.toString() !== req.user._id.toString()) {
+        throw new ApiError(403, "Not authorized to delete this event");
     }
 
-    await Event.findByIdAndDelete(id);
+    // Delete event
+    await Event.findByIdAndDelete(req.params.id);
 
-    res
+    return res
         .status(200)
         .json(
             new ApiResponse(
                 200,
-                "Event deleted successfully",
-                null
+                null,
+                "Event deleted successfully"
             )
         );
 });
 
-
-// Register for the events
+// Register for event
 const registerForEvent = asyncHandler(async (req, res) => {
-    const { id } = req.params;
+    const event = await Event.findById(req.params.id);
 
-    // Check the given id is valid or not
-    if(!id) {
-        throw new ApiError(400, "Please provide an event ID");
+    if (!event) {
+        throw new ApiError(404, "Event not found");
     }
 
-    const event = await Event.findById(id);
-
-    if(!event) {
-        throw new ApiError(404, "Event not found");
+    // Check if registration is still open
+    if (new Date() > new Date(event.registrationDeadline)) {
+        throw new ApiError(400, "Registration deadline has passed");
     }
 
     // Check if event is full
-    if (event.currentParticipants >= event.maxParticipants) {
+    if (event.registrations.length >= event.capacity) {
         throw new ApiError(400, "Event is full");
     }
 
     // Check if user is already registered
-    // event.attendees.some(attendee => attendee.id.toString() === req.user.userId)
-    if (event.registeredUsers.includes(req.user.userId)) {
-        throw new ApiError(400, "User already registered for this event");
+    const isRegistered = event.registrations.some(
+        reg => reg.user.toString() === req.user._id.toString()
+    );
+
+    if (isRegistered) {
+        throw new ApiError(400, "Already registered for this event");
     }
 
-    event.registeredUsers.push(req.user.userId);
+    // Add registration
+    event.registrations.push({
+        user: req.user._id,
+        registeredAt: new Date()
+    });
+
     await event.save();
 
-    res
+    return res
         .status(200)
         .json(
             new ApiResponse(
                 200,
-                "Registered for the event successfully",
-                null
+                null,
+                "Successfully registered for event"
             )
         );
 });
 
+// Unregister from event
+const cancelRegistrationFromEvent = asyncHandler(async (req, res) => {
+    const event = await Event.findById(req.params.id);
 
-// Cancel registration for the event
-
-const cancelRegistration = asyncHandler(async (req, res) => {
-    const { id } = req.params;
-
-    // Check the given id is valid or not
-    if(!id) {
-        throw new ApiError(400, "Please provide an event ID");
-    }
-
-    const event = await Event.findById(id);
-
-    if(!event) {
+    if (!event) {
         throw new ApiError(404, "Event not found");
     }
 
-    // Check if user is already registered
-    if (!event.registeredUsers.includes(req.user.userId)) {
-        throw new ApiError(400, "User not registered for this event");
+    // Check if user is registered
+    const registrationIndex = event.registrations.findIndex(
+        reg => reg.user.toString() === req.user._id.toString()
+    );
+
+    if (registrationIndex === -1) {
+        throw new ApiError(400, "Not registered for this event");
     }
 
-    event.registeredUsers = event.registeredUsers.filter(user => user.toString() !== req.user.userId);
+    // Remove registration
+    event.registrations.splice(registrationIndex, 1);
     await event.save();
 
-    res
+    return res
         .status(200)
         .json(
             new ApiResponse(
                 200,
-                "Cancelled registration for the event successfully",
-                null
+                null,
+                "Successfully unregistered from event"
             )
         );
 });
 
+// Get event registrations (admin only)
+const getEventRegistrations = asyncHandler(async (req, res) => {
+    const event = await Event.findById(req.params.id)
+        .populate('registrations.user', 'name email studentId');
+
+    if (!event) {
+        throw new ApiError(404, "Event not found");
+    }
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                event.registrations,
+                "Event registrations retrieved successfully"
+            )
+        );
+});
+
+// Get event attendance (admin only)
+const getEventAttendance = asyncHandler(async (req, res) => {
+    const event = await Event.findById(req.params.id)
+        .populate('registrations.user', 'name email studentId');
+
+    if (!event) {
+        throw new ApiError(404, "Event not found");
+    }
+
+    const attendance = event.registrations.map(reg => ({
+        user: reg.user,
+        registeredAt: reg.registeredAt,
+        attended: reg.attended || false,
+        attendedAt: reg.attendedAt
+    }));
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                attendance,
+                "Event attendance retrieved successfully"
+            )
+        );
+});
 
 export {
     createEvent,
     getEvents,
-    getEventDetails,
-    updateEventDetails,
-    deleteEvent,
     getEventById,
+    updateEvent,
+    deleteEvent,
     registerForEvent,
-    cancelRegistration
-}
+    cancelRegistrationFromEvent,
+    getEventRegistrations,
+    getEventAttendance
+};
