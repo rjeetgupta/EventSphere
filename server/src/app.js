@@ -1,32 +1,73 @@
-import express from "express";
-import cors from "cors";
-import cookieParser from "cookie-parser";
+import express from 'express';
+import cors from 'cors';
+import cookieParser from 'cookie-parser';
+import { apiLimiter, loginLimiter, registerLimiter } from './middlewares/rateLimiter.middleware.js';
+import { ApiError } from './utils/ApiError.js';
+import { asyncHandler } from './utils/asyncHandler.js';
 
+// Import routes
+import adminRoute from './routes/admin.route.js';
+import authRoute from './routes/auth.route.js';
+import userRoute from './routes/user.route.js';
+import eventRoute from './routes/event.route.js';
+import clubRoutes from './routes/club.route.js';
+import departmentRoutes from './routes/department.routes.js';
+import clubMemberRoutes from './routes/clubMember.route.js';
+import clubResourceRoutes from './routes/clubResource.route.js';
+import clubAchievementRoutes from './routes/clubAchievement.route.js';
 
 const app = express();
 
+// CORS middleware
 app.use(cors({
-    origin: process.env.CORS_ORIGIN,
-    credentials: true
-}))
+    origin: 'http://localhost:5173',
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
-app.use(express.json())
-app.use(express.urlencoded({ extended: true }))
-app.use(cookieParser())
+// Body parsing middleware
+app.use(express.json({ limit: '16kb' }));
+app.use(express.urlencoded({ extended: true, limit: '16kb' }));
+app.use(express.static("public"));
+app.use(cookieParser());
 
+// Rate limiting
+app.use('/api/auth/login', loginLimiter);
+app.use('/api/auth/register', registerLimiter);
+app.use('/api', apiLimiter);
 
-// import routes
-import authRoute from "./routes/auth.route.js";
-import userRoute from "./routes/user.route.js";
+// Routes
+app.use('/api/v1/admin', adminRoute);
+app.use('/api/v1/auth', authRoute);
+app.use('/api/v1/users', userRoute);
+app.use('/api/v1/events', eventRoute);
+app.use('/api/v1/clubs', clubRoutes);
+app.use('/api/v1/departments', departmentRoutes);
+app.use('/api/v1/club-members', clubMemberRoutes);
+app.use('/api/v1/club-resources', clubResourceRoutes);
+app.use('/api/v1/club-achievements', clubAchievementRoutes);
 
+// Health check endpoint
+app.get('/health', (req, res) => {
+    res.status(200).json({ status: 'ok' });
+});
 
-// routes declearation
+// Error handling middleware
+app.use((err, req, res, next) => {
+    if (err instanceof ApiError) {
+        return res.status(err.statusCode).json({
+            success: false,
+            message: err.message,
+            errors: err.errors
+        });
+    }
 
-app.use("/api/v1/users", authRoute);
-app.use("/api/v1/users", userRoute);
+    return res.status(500).json({
+        success: false,
+        message: 'Internal Server Error',
+        error: err.message
+    });
+});
 
-
-// http://localhost:3000/api/v1/users/register
-
-
-export { app };
+export default app;
