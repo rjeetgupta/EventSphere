@@ -32,7 +32,7 @@ const commonValidations = [
         .trim()
         .notEmpty()
         .withMessage('Event category is required')
-        .isIn(['workshop', 'seminar', 'competition', 'cultural', 'sports', 'other'])
+        .isIn(['Workshop', 'Seminar', 'Conference', 'Hackathon', 'Cultural', 'Sports', 'Other'])
         .withMessage('Invalid event category'),
     body('maxParticipants')
         .optional()

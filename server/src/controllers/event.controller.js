@@ -4,35 +4,36 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import Event from "../models/event.model.js";
 import User from "../models/user.model.js";
 import { ROLES } from "../middlewares/checkRole.middleware.js";
+import Club from "../models/club.model.js";
 
 // Create a new event
 const createEvent = asyncHandler(async (req, res) => {
     const {
         title,
         description,
-        startDate,
-        endDate,
+        date,
+        time,
         venue,
         capacity,
         registrationDeadline,
         category,
-        tags,
-        imageUrl
+        imageUrl,
+        clubId
     } = req.body;
 
     // Create event
     const event = await Event.create({
         title,
         description,
-        startDate,
-        endDate,
+        date,
+        time,
         venue,
         capacity,
         registrationDeadline,
         category,
-        tags,
         imageUrl,
-        organizer: req.user._id
+        createdBy: req.user._id,
+        club: clubId
     });
 
     return res
@@ -50,8 +51,7 @@ const createEvent = asyncHandler(async (req, res) => {
 const getEvents = asyncHandler(async (req, res) => {
     const {
         category,
-        startDate,
-        endDate,
+        date,
         search,
         page = 1,
         limit = 10
@@ -61,8 +61,14 @@ const getEvents = asyncHandler(async (req, res) => {
 
     // Apply filters
     if (category) query.category = category;
-    if (startDate) query.startDate = { $gte: new Date(startDate) };
-    if (endDate) query.endDate = { $lte: new Date(endDate) };
+    if (date) {
+        // If date is provided, get events for that specific date
+        const startOfDay = new Date(date);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(date);
+        endOfDay.setHours(23, 59, 59, 999);
+        query.date = { $gte: startOfDay, $lte: endOfDay };
+    }
     if (search) {
         query.$or = [
             { title: { $regex: search, $options: 'i' } },
@@ -72,8 +78,9 @@ const getEvents = asyncHandler(async (req, res) => {
 
     // Get events with pagination
     const events = await Event.find(query)
-        .populate('organizer', 'name email')
-        .sort({ startDate: 1 })
+        .populate('createdBy', 'name email')
+        .populate('club', 'name')
+        .sort({ date: 1 })
         .skip((page - 1) * limit)
         .limit(limit);
 
@@ -99,8 +106,9 @@ const getEvents = asyncHandler(async (req, res) => {
 // Get event by ID
 const getEventById = asyncHandler(async (req, res) => {
     const event = await Event.findById(req.params.id)
-        .populate('organizer', 'name email')
-        .populate('registrations.user', 'name email');
+        .populate('createdBy', 'name email')
+        .populate('club', 'name')
+        .populate('registeredUsers', 'name email');
 
     if (!event) {
         throw new ApiError(404, "Event not found");
@@ -125,8 +133,8 @@ const updateEvent = asyncHandler(async (req, res) => {
         throw new ApiError(404, "Event not found");
     }
 
-    // Check if user is the organizer
-    if (event.organizer.toString() !== req.user._id.toString()) {
+    // Check if user is authorized to update the event
+    if (event.createdBy.toString() !== req.user._id.toString()) {
         throw new ApiError(403, "Not authorized to update this event");
     }
 
@@ -135,7 +143,8 @@ const updateEvent = asyncHandler(async (req, res) => {
         req.params.id,
         { $set: req.body },
         { new: true }
-    );
+    ).populate('createdBy', 'name email')
+     .populate('club', 'name');
 
     return res
         .status(200)

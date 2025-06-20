@@ -35,7 +35,7 @@ router.route("/create-club")
 router.route("/:id")
     .get(getClubDetails);
 
-router.route("/club/:id")
+router.route("/update-club/:id")
     .patch(checkRole([ROLES.ADMIN, ROLES.SUPER_ADMIN, ROLES.CLUB_MANAGER]), updateClubValidator, validator, updateClubDetails);
 
 export default router;

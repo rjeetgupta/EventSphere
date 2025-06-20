@@ -1,14 +1,53 @@
 import { Router } from "express";
-import { createEvent, getEventDetails, getEvents, updateEventDetails, deleteEvent, cancelRegistration } from "../controllers/event.controller.js";
+import {
+    createEvent,
+    getEvents,
+    getEventById,
+    updateEvent,
+    deleteEvent,
+    registerForEvent,
+    cancelRegistrationFromEvent,
+    getEventRegistrations,
+    getEventAttendance
+} from "../controllers/event.controller.js";
 import { checkRole } from "../middlewares/checkRole.middleware.js";
-import verifyJWT from "../middlewares/verifyJWT.middleware.js";
+import { verifyJWT } from "../middlewares/auth.middleware.js";
+import { validator } from "../middlewares/validator.middleware.js";
+import { createEventValidator, updateEventValidator, eventRegistrationValidator } from "../validators/event.validator.js";
+import { ROLES } from '../middlewares/checkRole.middleware.js';
+
 const router = Router();
 
-router.route("/create-event").post([verifyJWT, checkRole(["admin", "club"])], createEvent);
-router.route("/get-events").get(requireAuth, getEvents);
-router.route("/get-event-details/:id").get(validateObjectId, getEventDetails);
-router.route("update-event/:id").put([verifyJWT, checkRole(["admin", "club"])], updateEventDetails);
-router.route("/delete-event/:id").delete([verifyJWT, checkRole(["admin", "club"])], deleteEvent);
-router.route("/cancel-registration/:id").delete(verifyJWT, cancelRegistration);
+// Public routes
+router.route("/")
+    .get(getEvents);
+
+router.route("/:id")
+    .get(getEventById);
+
+// Protected routes
+router.use(verifyJWT);
+
+// Club manager routes
+router.route("/create-event")
+    .post(checkRole(ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.CLUB_MANAGER), createEventValidator, validator, createEvent);
+
+router.route("/update-event/:id")
+    .patch(checkRole(ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.CLUB_MANAGER), updateEventValidator, validator, updateEvent)
+    .delete(checkRole(ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.CLUB_MANAGER), deleteEvent);
+
+// Student routes
+router.route("/:id/register")
+    .post(checkRole(ROLES.STUDENT), eventRegistrationValidator, validator, registerForEvent);
+
+router.route("/:id/cancel")
+    .delete(checkRole(ROLES.STUDENT), cancelRegistrationFromEvent);
+
+// Admin routes
+router.route("/:id/registrations")
+    .get(checkRole(ROLES.ADMIN, ROLES.SUPER_ADMIN), getEventRegistrations);
+
+router.route("/:id/attendance")
+    .get(checkRole(ROLES.ADMIN, ROLES.SUPER_ADMIN), getEventAttendance);
 
 export default router;

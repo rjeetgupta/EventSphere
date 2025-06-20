@@ -24,7 +24,7 @@ router.route("/profile")
     .patch(updateUserProfile);
 
 router.route("/change-password")
-    .post(changePasswordValidator, validator, changeCurrentPassword);
+    .patch(changePasswordValidator, validator, changeCurrentPassword);
 
 // Club manager routes
 router.route("/club/:clubId")

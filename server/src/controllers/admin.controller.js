@@ -1,11 +1,10 @@
-import { ApiError } from '../utils/ApiError.js';
-import { ApiResponse } from '../utils/ApiResponse.js';
-import { asyncHandler } from '../utils/asyncHandler.js';
-import { ROLES } from '../middlewares/checkRole.middleware.js';
-import Admin from '../models/admin.model.js';
-import User from '../models/user.model.js';
-import Club from '../models/club.model.js';
-
+import { ApiError } from "../utils/ApiError.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
+import { ROLES } from "../middlewares/checkRole.middleware.js";
+import Admin from "../models/admin.model.js";
+import User from "../models/user.model.js";
+import Club from "../models/club.model.js";
 
 // Generate tokens
 const generateTokens = async (adminId) => {
@@ -31,13 +30,17 @@ const generateTokens = async (adminId) => {
 const createSuperAdmin = asyncHandler(async (req, res) => {
     try {
         // Check if super admin already exists
-        const existingSuperAdmin = await Admin.findOne({ role: ROLES.SUPER_ADMIN });
+        const existingSuperAdmin = await Admin.findOne({
+            role: ROLES.SUPER_ADMIN,
+        });
         if (existingSuperAdmin) {
             throw new ApiError(403, "Super admin already exists");
         }
 
         // Check if email already exists
-        const existingAdmin = await Admin.findOne({ email: process.env.SUPER_ADMIN_EMAIL });
+        const existingAdmin = await Admin.findOne({
+            email: process.env.SUPER_ADMIN_EMAIL,
+        });
         if (existingAdmin) {
             throw new ApiError(409, "Admin with this email already exists");
         }
@@ -48,22 +51,22 @@ const createSuperAdmin = asyncHandler(async (req, res) => {
             email: process.env.SUPER_ADMIN_EMAIL,
             password: process.env.SUPER_ADMIN_PASSWORD,
             role: ROLES.SUPER_ADMIN,
-            department: process.env.SUPER_ADMIN_DEPARTMENT
+            department: process.env.SUPER_ADMIN_DEPARTMENT,
         });
 
-        return res
-            .status(201)
-            .json(
-                new ApiResponse(
-                    201,
-                    {
+        return res.status(201).json(
+            new ApiResponse(
+                201,
+                {
+                    user: {
                         name: superAdmin.name,
                         email: superAdmin.email,
-                        role: superAdmin.role
+                        role: superAdmin.role,
                     },
-                    "Super admin created successfully"
-                )
-            );
+                },
+                "Super admin created successfully"
+            )
+        );
     } catch (error) {
         // Handle specific MongoDB errors
         if (error.code === 11000) {
@@ -90,26 +93,24 @@ const createAdmin = asyncHandler(async (req, res) => {
         password,
         role: ROLES.ADMIN,
         departmentName,
-        createdBy: req.user._id
+        createdBy: req.user._id,
     });
 
-    return res
-        .status(201)
-        .json(
-            new ApiResponse(
-                201,
-                {
-                    admin: {
-                        _id: admin._id,
-                        name: admin.name,
-                        email: admin.email,
-                        role: admin.role,
-                        departmentName: admin.departmentName
-                    }
+    return res.status(201).json(
+        new ApiResponse(
+            201,
+            {
+                user: {
+                    _id: admin._id,
+                    name: admin.name,
+                    email: admin.email,
+                    role: admin.role,
+                    departmentName: admin.departmentName,
                 },
-                "Admin created successfully"
-            )
-        );
+            },
+            "Admin created successfully"
+        )
+    );
 });
 
 const loginAdmin = asyncHandler(async (req, res) => {
@@ -133,7 +134,7 @@ const loginAdmin = asyncHandler(async (req, res) => {
 
     const options = {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production'
+        secure: process.env.NODE_ENV === "production",
     };
 
     return res
@@ -144,15 +145,15 @@ const loginAdmin = asyncHandler(async (req, res) => {
             new ApiResponse(
                 200,
                 {
-                    admin: {
+                    user: {
                         _id: admin._id,
                         name: admin.name,
                         email: admin.email,
                         role: admin.role,
-                        departmentName: admin.departmentName
+                        departmentName: admin.departmentName,
                     },
                     accessToken,
-                    refreshToken
+                    refreshToken,
                 },
                 "Admin logged in successfully"
             )
@@ -167,10 +168,10 @@ const logoutAdmin = asyncHandler(async (req, res) => {
     const admin = await Admin.findByIdAndUpdate(
         adminId,
         {
-            $unset: { refreshToken: 1 }
+            $unset: { refreshToken: 1 },
         },
         {
-            new: true
+            new: true,
         }
     );
 
@@ -181,7 +182,7 @@ const logoutAdmin = asyncHandler(async (req, res) => {
     // Clear cookies
     const options = {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production'
+        secure: process.env.NODE_ENV === "production",
     };
 
     return res
@@ -203,7 +204,10 @@ const assignClubManager = asyncHandler(async (req, res) => {
 
     // Check if user has departmentName (required for club managers)
     if (!user.departmentName) {
-        throw new ApiError(400, "User must have a department assigned before becoming a club manager");
+        throw new ApiError(
+            400,
+            "User must have a department assigned before becoming a club manager"
+        );
     }
 
     // Check if club exists
@@ -225,7 +229,10 @@ const assignClubManager = asyncHandler(async (req, res) => {
 
     // Check if user's department matches club's department
     if (user.departmentName !== club.departmentName) {
-        throw new ApiError(400, "User's department must match the club's department");
+        throw new ApiError(
+            400,
+            "User's department must match the club's department"
+        );
     }
 
     // Update user role to club manager
@@ -237,34 +244,32 @@ const assignClubManager = asyncHandler(async (req, res) => {
     club.manager = userId;
     await club.save();
 
-    return res
-        .status(200)
-        .json(
-            new ApiResponse(
-                200,
-                {
-                    user: {
-                        _id: user._id,
-                        name: user.name,
-                        email: user.email,
-                        role: user.role,
-                        departmentName: user.departmentName
-                    },
-                    club: {
-                        _id: club._id,
-                        name: club.name,
-                        departmentName: club.departmentName
-                    }
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            {
+                user: {
+                    _id: user._id,
+                    name: user.name,
+                    email: user.email,
+                    role: user.role,
+                    departmentName: user.departmentName,
                 },
-                "User assigned as club manager successfully"
-            )
-        );
+                club: {
+                    _id: club._id,
+                    name: club.name,
+                    departmentName: club.departmentName,
+                },
+            },
+            "User assigned as club manager successfully"
+        )
+    );
 });
 
-export { 
-    createSuperAdmin, 
-    createAdmin, 
-    loginAdmin, 
+export {
+    createSuperAdmin,
+    createAdmin,
+    loginAdmin,
     logoutAdmin,
-    assignClubManager 
+    assignClubManager,
 };

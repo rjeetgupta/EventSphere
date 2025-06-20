@@ -5,15 +5,16 @@ import { ApiError } from '../utils/ApiError.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { ROLES } from '../middlewares/checkRole.middleware.js';
-import Department from '../models/department.model.js';
-import mongoose from 'mongoose';
+
 
 // Options for cookies
 const options = {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
-    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    httpOnly: true, // Prevents JavaScript access to cookies
+    secure: process.env.NODE_ENV === 'production', // Only send cookies over HTTPS in production
+    sameSite: 'strict', // Prevents CSRF attacks
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    path: '/', // Cookie is available for all paths
+    domain: process.env.COOKIE_DOMAIN || undefined // Set this in production
 };
 
 // Generate access token and refresh token with rotation
@@ -36,91 +37,7 @@ const generateTokens = async (userId) => {
     }
 };
 
-// // Create super admin (one-time setup)
-// const createSuperAdmin = asyncHandler(async (req, res) => {
-//     try {
-//         // Check if super admin already exists
-//         const existingSuperAdmin = await User.findOne({ role: ROLES.SUPER_ADMIN });
-//         if (existingSuperAdmin) {
-//             throw new ApiError(403, "Super admin already exists");
-//         }
 
-//         // Check if email already exists
-//         const existingUser = await User.findOne({ email: process.env.SUPER_ADMIN_EMAIL });
-//         if (existingUser) {
-//             throw new ApiError(409, "User with this email already exists");
-//         }
-
-//         // Create super admin
-//         const superAdmin = await User.create({
-//             name: process.env.SUPER_ADMIN_NAME,
-//             email: process.env.SUPER_ADMIN_EMAIL,
-//             password: process.env.SUPER_ADMIN_PASSWORD,
-//             role: ROLES.SUPER_ADMIN,
-//             department: process.env.SUPER_ADMIN_DEPARTMENT
-//         });
-
-//         return res
-//             .status(201)
-//             .json(
-//                 new ApiResponse(
-//                     201,
-//                     {
-//                         name: superAdmin.name,
-//                         email: superAdmin.email,
-//                         role: superAdmin.role
-//                     },
-//                     "Super admin created successfully"
-//                 )
-//             );
-//     } catch (error) {
-//         // Handle specific MongoDB errors
-//         if (error.code === 11000) {
-//             throw new ApiError(409, "User with this email already exists");
-//         }
-//         throw error;
-//     }
-// });
-
-// // Create admin (super admin only)
-// const createAdmin = asyncHandler(async (req, res) => {
-//     const { name, email, password, departmentName } = req.body;
-
-//     // Check if user already exists
-//     const existingUser = await User.findOne({ email });
-//     if (existingUser) {
-//         throw new ApiError(409, "User with this email already exists");
-//     }
-
-//     // Create admin
-//     const admin = await User.create({
-//         name,
-//         email,
-//         password,
-//         role: ROLES.ADMIN,
-//         departmentName,
-//         createdBy: req.user._id
-//     });
-
-//     return res
-//         .status(201)
-//         .json(
-//             new ApiResponse(
-//                 201,
-//                 {
-//                     admin: {
-//                         _id: admin._id,
-//                         name: admin.name,
-//                         email: admin.email,
-//                         role: admin.role,
-//                         username: admin.username,
-//                         department: department.name
-//                     }
-//                 },
-//                 "Admin created successfully"
-//             )
-//         );
-// });
 
 // Register user with enhanced security
 const registerUser = asyncHandler(async (req, res) => {
