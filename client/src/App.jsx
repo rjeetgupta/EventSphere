@@ -1,94 +1,169 @@
-import { useState } from 'react';
-import { ThemeProvider } from '@/components/ThemeProvider';
-import { Toaster } from "@/components/ui/sonner"
-import { AuthProvider } from '@/contexts/AuthProvider';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
+import { useSelector, useDispatch } from 'react-redux';
+import { Toaster } from 'sonner';
+import { ROLES } from '@/constants/authConstants';
+import { selectCurrentUser, selectIsAuthenticated, loadUserFromToken } from '@/store/authSlice';
+import { useEffect } from 'react';
+
+// Layouts
+import MainLayout from '@/components/layout/MainLayout';
+import AdminLayout from '@/components/layout/AdminLayout';
+import ClubLayout from '@/components/layout/ClubLayout';
+
+// Auth Pages
+import Login from '@/pages/auth/Login';
+import Register from '@/pages/auth/Register';
+import ForgotPassword from '@/pages/auth/ForgotPassword';
+
+// Public Pages
 import HomePage from '@/pages/HomePage';
-import LoginPage from '@/pages/LoginPage';
-import RegisterPage from '@/pages/RegisterPage';
-import EventsPage from '@/pages/EventsPage';
-import EventDetailPage from '@/pages/EventDetailsPage';
-import AdminDashboardPage from '@/pages/admin/dashboard';
-import AdminEventsPage from '@/pages/admin/events';
-import AdminUsersPage from '@/pages/admin/users';
-import AdminClubsPage from '@/pages/admin/clubs';
-import AdminAnalyticsPage from '@/pages/admin/analytics';
-import ClubDashboardPage from '@/pages/club/dashboard';
-import ClubEventsPage from '@/pages/club/events';
-import ClubAnalyticsPage from '@/pages/club/analytics';
-import UserProfilePage from '@/pages/ProfilePage';
-import ProtectedRoute from '@/components/ProtectedRoute';
-import Layout from '@/components/Layout';
+import Events from '@/pages/Events';
+import EventDetails from '@/pages/events/EventDetails';
+import Clubs from '@/pages/clubs/Clubs';
+import ClubDetails from '@/pages/clubs/ClubDetails';
+import About from '@/pages/About';
+import Contact from '@/pages/Contact';
+import NotFound from '@/pages/NotFound';
+import CreateClub from '@/pages/clubs/CreateClub';
+import CreateEvent from '@/pages/events/CreateEvent';
+
+// Student Pages
+import StudentDashboard from '@/pages/dashboards/StudentDashboard';
+import Profile from '@/pages/Profile';
+
+// Admin Pages
+import AdminDashboard from '@/pages/dashboards/AdminDashboard';
+import AdminClubsPage from '@/pages/admin/Clubs';
+
+// Club Manager Pages
+import ClubDashboard from '@/pages/dashboards/ClubDashboard';
+import ClubEvents from '@/pages/club/Events';
+import ClubAnalytics from '@/pages/club/Analytics';
+import ClubManagement from '@/pages/club/Management';
+import EditEvent from '@/pages/club/EditEvent';
+
+// Components
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 function App() {
+  const dispatch = useDispatch();
+  const isAuthenticated = useSelector(selectIsAuthenticated);
+  const user = useSelector(selectCurrentUser);
+
+  useEffect(() => {
+    dispatch(loadUserFromToken());
+  }, [dispatch]);
+
   return (
     <>
-      <Toaster />
-      <ThemeProvider defaultTheme="light" storageKey="campus-events-theme">
-        <AuthProvider>
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Layout />}>
-                <Route index element={<HomePage />} />
-                <Route path="login" element={<LoginPage />} />
-                <Route path="register" element={<RegisterPage />} />
-                <Route path="events" element={<EventsPage />} />
-                <Route path="events/:id" element={<EventDetailPage />} />
-                <Route path="profile" element={
-                  <ProtectedRoute allowedRoles={['admin', 'club', 'student']}>
-                    <UserProfilePage />
-                  </ProtectedRoute>
-                } />
+      <Toaster position="top-right" />
+      <Routes>
+        {/* Main Layout Routes */}
+        <Route element={<MainLayout />}>
+          {/* Public Routes */}
+          <Route path="/" element={<HomePage />} />
+          <Route path="/events" element={<Events />} />
+          <Route path="/events/:id" element={<EventDetails />} />
+          <Route path="/clubs" element={<Clubs />} />
+          <Route path="/clubs/:id" element={<ClubDetails />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/contact" element={<Contact />} />
 
-                {/* Admin Routes */}
-                <Route path="admin" element={
-                  <ProtectedRoute allowedRoles={['admin']}>
-                    <AdminDashboardPage />
-                  </ProtectedRoute>
-                } />
-                <Route path="admin/events" element={
-                  <ProtectedRoute allowedRoles={['admin']}>
-                    <AdminEventsPage />
-                  </ProtectedRoute>
-                } />
-                <Route path="admin/users" element={
-                  <ProtectedRoute allowedRoles={['admin']}>
-                    <AdminUsersPage />
-                  </ProtectedRoute>
-                } />
-                <Route path="admin/clubs" element={
-                  <ProtectedRoute allowedRoles={['admin']}>
-                    <AdminClubsPage />
-                  </ProtectedRoute>
-                } />
-                <Route path="admin/analytics" element={
-                  <ProtectedRoute allowedRoles={['admin']}>
-                    <AdminAnalyticsPage />
-                  </ProtectedRoute>
-                } />
+          {/* Create Club/Event for Admin/SuperAdmin */}
+          <Route
+            path="/clubs/create-club"
+            element={
+              <ProtectedRoute allowedRoles={[ROLES.SUPER_ADMIN, ROLES.ADMIN]}>
+                <CreateClub />
+              </ProtectedRoute>
+            }
+          />
+          {/* Create event for Admin/SuperAdmin/clubManager */}
+          <Route
+            path="/events/create-event"
+            element={
+              <ProtectedRoute allowedRoles={[ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.CLUB_MANAGER]}>
+                <CreateEvent />
+              </ProtectedRoute>
+            }
+          />
 
-                {/* Club Routes */}
-                <Route path="club" element={
-                  <ProtectedRoute allowedRoles={['club']}>
-                    <ClubDashboardPage />
-                  </ProtectedRoute>
-                } />
-                <Route path="club/events" element={
-                  <ProtectedRoute allowedRoles={['club']}>
-                    <ClubEventsPage />
-                  </ProtectedRoute>
-                } />
-                <Route path="club/analytics" element={
-                  <ProtectedRoute allowedRoles={['club']}>
-                    <ClubAnalyticsPage />
-                  </ProtectedRoute>
-                } />
-              </Route>
-            </Routes>
-          </BrowserRouter>
-          <Toaster />
-        </AuthProvider>
-      </ThemeProvider>
+          {/* Auth Routes */}
+          <Route
+            path="/login"
+            element={
+              <AuthGuard>
+                <Login />
+              </AuthGuard>
+            }
+          />
+          <Route
+            path="/register"
+            element={
+              <AuthGuard>
+                <Register />
+              </AuthGuard>
+            }
+          />
+          <Route
+            path="/forgot-password"
+            element={
+              <AuthGuard>
+                <ForgotPassword />
+              </AuthGuard>
+            }
+          />
+
+          {/* Protected Routes */}
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute allowedRoles={[ROLES.STUDENT]}>
+                <StudentDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            }
+          />
+        </Route>
+
+        {/* Admin Routes */}
+        <Route
+          element={
+            <ProtectedRoute allowedRoles={[ROLES.SUPER_ADMIN, ROLES.ADMIN]}>
+              <AdminLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        </Route>
+
+        {/* Club Manager Routes */}
+        <Route
+          element={
+            <ProtectedRoute allowedRoles={[ROLES.CLUB_MANAGER]}>
+              <ClubLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route path="/club/dashboard" element={<ClubDashboard />} />
+          <Route path="/club/events" element={<ClubEvents />} />
+          <Route path="/club/events/create" element={<CreateEvent />} />
+          <Route path="/club/events/:id/edit" element={<EditEvent />} />
+          <Route path="/club/analytics" element={<ClubAnalytics />} />
+          <Route path="/club/management" element={<ClubManagement />} />
+        </Route>
+
+        {/* 404 Route */}
+        <Route path="*" element={<NotFound />} />
+      </Routes>
     </>
   );
 }
