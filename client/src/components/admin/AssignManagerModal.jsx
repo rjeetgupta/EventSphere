@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { getClubs, getUsers, assignManagerToClub } from '@/services/api';
 import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '@/store/authSlice';
+import { toast } from 'sonner';
 
 const AssignManagerModal = ({ open, onClose, onAssigned }) => {
   const admin = useSelector(selectCurrentUser);
@@ -19,7 +20,7 @@ const AssignManagerModal = ({ open, onClose, onAssigned }) => {
       getClubs({ departmentName: admin?.departmentName }).then(data => {
         setClubs(Array.isArray(data?.data?.clubs) ? data.data.clubs : []);
       });
-      getUsers({ departmentName: admin?.departmentName }).then(data => {
+      getUsers({ departmentName: admin?.departmentName, role: 'Student', limit: 1000 }).then(data => {
         setUsers(Array.isArray(data?.data) ? data.data : []);
       });
     }
@@ -34,6 +35,7 @@ const AssignManagerModal = ({ open, onClose, onAssigned }) => {
     setSelectedUserId('');
     onAssigned && onAssigned();
     onClose();
+    toast.success('Club Manager assigned successfully');
   };
 
   return (
@@ -48,9 +50,15 @@ const AssignManagerModal = ({ open, onClose, onAssigned }) => {
               <SelectValue placeholder="Select Club" />
             </SelectTrigger>
             <SelectContent>
-              {(Array.isArray(clubs) ? clubs : []).map(club => (
-                <SelectItem key={club._id} value={club._id}>{club.name}</SelectItem>
-              ))}
+              {clubs && clubs.length > 0 ? (
+                clubs.map(club => (
+                  <SelectItem key={club._id} value={club._id}>{club.name}</SelectItem>
+                ))
+              ) : (
+                <div className="text-center py-2 text-sm text-muted-foreground">
+                  No clubs found for this department.
+                </div>
+              )}
             </SelectContent>
           </Select>
           <Select value={selectedUserId} onValueChange={setSelectedUserId}>
@@ -58,11 +66,15 @@ const AssignManagerModal = ({ open, onClose, onAssigned }) => {
               <SelectValue placeholder="Select Manager (student in your department)" />
             </SelectTrigger>
             <SelectContent>
-              {(Array.isArray(users) ? users : [])
-                .filter(u => u.role === 'student' && u.departmentName === admin?.departmentName)
-                .map(user => (
-                  <SelectItem key={user._id} value={user._id}>{user.name}</SelectItem>
-              ))}
+              {users && users.length > 0 ? (
+                users.map(user => (
+                  <SelectItem key={user._id} value={user._id}>{user.name} - {user.email}</SelectItem>
+                ))
+              ) : (
+                <div className="text-center py-2 text-sm text-muted-foreground">
+                  No students found for this department.
+                </div>
+              )}
             </SelectContent>
           </Select>
         </div>
