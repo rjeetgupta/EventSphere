@@ -39,7 +39,6 @@ const EventDetails = () => {
     try {
       await dispatch(registerForEvent(event._id)).unwrap();
       toast.success('Successfully registered for the event');
-      dispatch(fetchEventById(id));
     } catch (error) {
       toast.error(error.message || 'Failed to register for the event');
     }
@@ -49,7 +48,6 @@ const EventDetails = () => {
     try {
       await dispatch(cancelRegistration(event._id)).unwrap();
       toast.success('Successfully cancelled registration');
-      dispatch(fetchEventById(id));
     } catch (error) {
       toast.error(error.message || 'Failed to cancel registration');
     }

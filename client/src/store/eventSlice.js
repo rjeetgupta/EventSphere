@@ -112,7 +112,7 @@ export const cancelRegistration = createAsyncThunk(
   async (eventId, { rejectWithValue }) => {
     try {
       console.log('Cancelling registration for event:', eventId);
-      const response = await apiClient.delete(`/events/${eventId}/register`);
+      const response = await apiClient.delete(`/events/${eventId}/cancel-registration`);
       console.log('Cancel registration response:', response.data);
       // Extract data from ApiResponse format
       return response.data?.data || response.data;
