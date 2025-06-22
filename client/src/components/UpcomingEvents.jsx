@@ -3,145 +3,147 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, Calendar, Users } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
+import { DEPARTMENTS } from '@/constants/departments';
 
 const UpcomingEvents = ({ events = [] }) => {
   const [activeTab, setActiveTab] = useState('all');
 
-  // Dummy Events Array
-  const dummyEvents = [
-    {
-      id: 'dummy1',
-      title: 'Tech Conference 2024',
-      description: 'Explore the future of tech with industry leaders.',
-      date: '2024-06-10',
-      venue: 'Main Auditorium',
-      image: 'https://source.unsplash.com/featured/?conference',
-      currentParticipants: 50,
-      maxParticipants: 100,
-    },
-    {
-      id: 'dummy2',
-      title: 'Art & Culture Fest',
-      description: 'Celebrate diversity with art and cultural events.',
-      date: '2024-06-15',
-      venue: 'Cultural Hall',
-      image: 'https://source.unsplash.com/featured/?art',
-      currentParticipants: 30,
-      maxParticipants: 60,
-    },
-    {
-      id: 'dummy3',
-      title: 'Entrepreneurship Bootcamp',
-      description: 'Learn how to start your own business in 3 days.',
-      date: '2024-06-20',
-      venue: 'Room 302',
-      image: 'https://source.unsplash.com/featured/?startup',
-      currentParticipants: 40,
-      maxParticipants: 50,
-    },
-  ];
-
   // Card Generator
-  const renderEventsList = (eventList) => (
-    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-      {eventList.map((event) => (
-        <Link to={`/events/${event.id}`} key={event.id}>
-          <div className="border rounded-lg overflow-hidden shadow hover:shadow-md transition">
-            <div className="aspect-video overflow-hidden">
-              <img
-                src={event.image}
-                alt={event.title}
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <div className="p-4 space-y-2">
-              <div className="flex justify-between text-sm text-muted-foreground">
-                <span className="flex items-center gap-1">
-                  <Calendar className="w-4 h-4" /> {event.date}
-                </span>
-                <span className="flex items-center gap-1">
-                  <Users className="w-4 h-4" />
-                  {event.currentParticipants}/{event.maxParticipants}
-                </span>
-              </div>
-              <h3 className="font-semibold text-lg">{event.title}</h3>
-              <p className="text-sm text-muted-foreground">{event.description}</p>
-              <div className="text-xs bg-muted inline-block px-2 py-1 rounded">
-                {event.venue}
-              </div>
-            </div>
-          </div>
-        </Link>
-      ))}
-    </div>
-  );
-
-  return (
-    <section className="container px-4 sm:px-6 py-12 md:py-16 mx-auto">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-10">
-        <div className="space-y-2">
-          <h2 className="text-3xl md:text-4xl font-bold">Upcoming Events</h2>
-          <p className="text-muted-foreground text-lg">
-            Discover and participate in exciting campus events
+  const EventCard = ({ event }) => (
+    <div className="bg-white rounded-lg shadow-sm border overflow-hidden hover:shadow-md transition-shadow">
+      <div className="aspect-video relative overflow-hidden">
+        <img
+          src={event.imageUrl || 'https://source.unsplash.com/featured/?event'}
+          alt={event.title}
+          className="object-cover w-full h-full"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+        <div className="absolute bottom-4 left-4 right-4">
+          <h3 className="text-white font-semibold text-lg mb-1 line-clamp-1">
+            {event.title}
+          </h3>
+          <p className="text-white/90 text-sm line-clamp-2">
+            {event.description}
           </p>
         </div>
-        <Button variant="outline" className="whitespace-nowrap px-6 py-2 h-auto" asChild>
-          <Link to="/events" className="flex items-center gap-2">
-            View All Events <ArrowRight className="h-4 w-4" />
+      </div>
+      
+      <div className="p-4">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <Calendar className="h-4 w-4" />
+            <span>{new Date(event.date).toLocaleDateString()}</span>
+          </div>
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <Users className="h-4 w-4" />
+            <span>{event.currentParticipants || 0}/{event.maxParticipants || event.capacity || '∞'}</span>
+          </div>
+        </div>
+        
+        <Button asChild className="w-full">
+          <Link to={`/events/${event._id || event.id}`}>
+            View Details
+            <ArrowRight className="h-4 w-4 ml-2" />
           </Link>
         </Button>
       </div>
+    </div>
+  );
 
-      {/* Tabs */}
-      <div className="space-y-8">
-        <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="w-full flex justify-start p-0 border-b rounded-none gap-0">
-            <TabsTrigger value="all" className="px-6 py-3 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-background">All Categories</TabsTrigger>
-            <TabsTrigger value="tech" className="px-6 py-3 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-background">Technology</TabsTrigger>
-            <TabsTrigger value="cultural" className="px-6 py-3 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-background">Cultural</TabsTrigger>
-            <TabsTrigger value="sports" className="px-6 py-3 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-background">Sports</TabsTrigger>
-            <TabsTrigger value="academic" className="px-6 py-3 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-background">Academic</TabsTrigger>
+  // Render events list
+  const renderEventsList = (eventsList) => {
+    if (eventsList.length === 0) {
+      return (
+        <div className="text-center py-12">
+          <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 mb-2">No events found</h3>
+          <p className="text-gray-600">Check back later for upcoming events</p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {eventsList.map((event) => (
+          <EventCard key={event._id || event.id} event={event} />
+        ))}
+      </div>
+    );
+  };
+
+  return (
+    <section className="py-16 bg-gray-50">
+      <div className="container mx-auto px-4">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl font-bold text-gray-900 mb-4">
+            Upcoming Events
+          </h2>
+          <p className="text-gray-600 max-w-2xl mx-auto">
+            Discover exciting events happening in your college. From technical workshops to cultural celebrations, there's something for everyone.
+          </p>
+        </div>
+
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-5 mb-8">
+            <TabsTrigger value="all">All Events</TabsTrigger>
+            <TabsTrigger value="tech">Technical</TabsTrigger>
+            <TabsTrigger value="cultural">Cultural</TabsTrigger>
+            <TabsTrigger value="sports">Sports</TabsTrigger>
+            <TabsTrigger value="academic">Academic</TabsTrigger>
           </TabsList>
 
-          {/* Tab Contents */}
           <div className="pt-6">
             <TabsContent value="all">
-              {renderEventsList([...events.slice(0, 6), ...dummyEvents])}
+              {renderEventsList(events.slice(0, 6))}
             </TabsContent>
 
             <TabsContent value="tech">
               {renderEventsList(events.filter(event =>
-                event.tags.includes('Technology') ||
-                event.tags.includes('Coding') ||
-                event.department === 'Computer Science'
+                event.category === 'technical' ||
+                event.category === 'Technology' ||
+                event.tags?.includes('Technology') ||
+                event.tags?.includes('Coding')
               ).slice(0, 6))}
             </TabsContent>
 
             <TabsContent value="cultural">
               {renderEventsList(events.filter(event =>
-                event.tags.includes('Cultural') ||
-                event.tags.includes('Arts') ||
-                event.department === 'Cultural Affairs'
+                event.category === 'cultural' ||
+                event.category === 'Cultural' ||
+                event.tags?.includes('Cultural') ||
+                event.tags?.includes('Arts')
               ).slice(0, 6))}
             </TabsContent>
 
             <TabsContent value="sports">
               {renderEventsList(events.filter(event =>
-                event.tags.includes('Sports') ||
-                event.department === 'Physical Education'
+                event.category === 'sports' ||
+                event.category === 'Sports' ||
+                event.tags?.includes('Sports')
               ).slice(0, 6))}
             </TabsContent>
 
             <TabsContent value="academic">
               {renderEventsList(events.filter(event =>
-                event.tags.includes('Academic') ||
-                event.tags.includes('Research') ||
-                event.department === 'Research Cell'
+                event.category === 'academic' ||
+                event.category === 'Academic' ||
+                event.tags?.includes('Academic') ||
+                event.tags?.includes('Research')
               ).slice(0, 6))}
             </TabsContent>
           </div>
         </Tabs>
+
+        {events.length > 6 && (
+          <div className="text-center mt-8">
+            <Button asChild variant="outline">
+              <Link to="/events">
+                View All Events
+                <ArrowRight className="h-4 w-4 ml-2" />
+              </Link>
+            </Button>
+          </div>
+        )}
       </div>
     </section>
   );
