@@ -53,7 +53,7 @@ router.route("/update-event/:id")
 router.route("/:id/register")
     .post(verifyJWT, registerForEvent);
 
-router.route("/:id/register")
+router.route("/:id/cancel-registration")
     .delete(verifyJWT, cancelRegistrationFromEvent);
 
 // Admin routes

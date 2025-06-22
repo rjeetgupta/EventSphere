@@ -40,7 +40,7 @@ const eventSchema = new mongoose.Schema(
         },
         Image: {
             type: String,
-            required: true,
+            required: function() { return this.isNew; }
         },
         capacity: {
             type: Number,

@@ -180,12 +180,12 @@ const registerForEvent = asyncHandler(async (req, res) => {
     }
 
     // Check if event status allows registration
-    if (event.status !== "upcoming") {
-        throw new ApiError(
-            400,
-            "Registration is only open for upcoming events"
-        );
-    }
+    // if (event.status !== "upcoming") {
+    //     throw new ApiError(
+    //         400,
+    //         "Registration is only open for upcoming events"
+    //     );
+    // }
 
     // Check if event is full
     if (event.registeredUsers.length >= event.capacity) {
