@@ -1,4 +1,6 @@
 import { format } from 'date-fns';
+import apiClient from '@/services/apiClient';
+import { DEPARTMENTS } from '@/constants/departments';
 
 // Mock Data
 const MOCK_EVENTS = [
@@ -87,225 +89,182 @@ const MOCK_USERS = [
   }
 ];
 
-const MOCK_DEPARTMENTS = [
-  { id: '1', name: 'Computer Science', eventsCount: 15, studentsCount: 450 },
-  { id: '2', name: 'Arts', eventsCount: 10, studentsCount: 300 }
-];
-
 // Helper Functions
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 // Event API
 export const getEvents = async (filters = {}) => {
-  await delay(800);
-  let results = [...MOCK_EVENTS];
-  
-  if (filters.department) {
-    results = results.filter(e => e.department === filters.department);
+  try {
+    const response = await apiClient.get('/events', { params: filters });
+    return response.data;
+  } catch (error) {
+    throw new Error('Failed to fetch events');
   }
-  if (filters.status) {
-    results = results.filter(e => e.status === filters.status);
-  }
-  if (filters.search) {
-    const term = filters.search.toLowerCase();
-    results = results.filter(e => 
-      e.title.toLowerCase().includes(term) || 
-      e.description.toLowerCase().includes(term)
-    );
-  }
-  return results;
 };
 
-
-
 export const getEventById = async (id) => {
-  await delay(500);
-  return MOCK_EVENTS.find(event => event.id === id) || null;
+  try {
+    const response = await apiClient.get(`/events/${id}`);
+    return response.data;
+  } catch (error) {
+    throw new Error('Failed to fetch event details');
+  }
 };
 
 export const createEvent = async (eventData) => {
-  await delay(1000);
-  const newEvent = {
-    ...eventData,
-    id: Math.random().toString(36).substring(2, 9),
-    currentParticipants: 0,
-    attendees: [],
-    status: 'upcoming'
-  };
-  MOCK_EVENTS.push(newEvent);
-  return newEvent;
+  try {
+    const response = await apiClient.post('/events/create-event', eventData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  } catch (error) {
+    throw new Error(error.response?.data?.message || 'Failed to create event');
+  }
 };
 
+export const updateEvent = async (id, eventData) => {
+  try {
+    const response = await apiClient.patch(`/events/update-event/${id}`, eventData);
+    return response.data;
+  } catch (error) {
+    throw new Error('Failed to update event');
+  }
+};
+
+export const deleteEvent = async (id) => {
+  try {
+    await apiClient.delete(`/events/update-event/${id}`);
+    return true;
+  } catch (error) {
+    throw new Error('Failed to delete event');
+  }
+};
 
 // Register for Event
-export const registerForEvent = async (eventId, userId, userName, userEmail) => {
-  await delay(800);
-  const event = MOCK_EVENTS.find(e => e.id === eventId);
-  if (!event || event.currentParticipants >= event.maxParticipants) return false;
-  
-  event.attendees.push({
-    id: userId,
-    name: userName,
-    email: userEmail,
-    attended: false,
-    registrationDate: format(new Date(), 'yyyy-MM-dd')
-  });
-  event.currentParticipants++;
-  return true;
+export const registerForEvent = async (eventId) => {
+  try {
+    const response = await apiClient.post(`/events/${eventId}/register`);
+    return response.data?.data || response.data;
+  } catch (error) {
+    throw new Error(error.response?.data?.message || 'Failed to register for event');
+  }
 };
 
-export const cancelRegistration = async (eventId, userId) => {
-  await delay(800);
-  
-  const eventIndex = MOCK_EVENTS.findIndex(event => event.id === eventId);
-  if (eventIndex === -1) return false;
-  
-  const event = MOCK_EVENTS[eventIndex];
-  
-  // Check if registered
-  const attendeeIndex = event.attendees.findIndex(attendee => attendee.id === userId);
-  if (attendeeIndex === -1) return false;
-  
-  // Remove registration
-  event.attendees.splice(attendeeIndex, 1);
-  event.currentParticipants -= 1;
-  return true;
+export const cancelRegistration = async (eventId) => {
+  try {
+    const response = await apiClient.delete(`/events/${eventId}/register`);
+    return response.data?.data || response.data;
+  } catch (error) {
+    throw new Error(error.response?.data?.message || 'Failed to cancel registration');
+  }
 };
 
 // Club API
 export const getClubs = async (filters = {}) => {
-  await delay(800);
-  let results = [...MOCK_CLUBS];
-  
-  if (filters.department) {
-    results = results.filter(c => c.department === filters.department);
+  try {
+    const response = await apiClient.get('/clubs', { params: filters });
+    return response.data;
+  } catch (error) {
+    throw new Error('Failed to fetch clubs');
   }
-  if (filters.status) {
-    results = results.filter(c => c.status === filters.status);
+};
+
+export const getClubById = async (id) => {
+  try {
+    const response = await apiClient.get(`/clubs/${id}`);
+    return response.data;
+  } catch (error) {
+    throw new Error('Failed to fetch club details');
   }
-  return results;
+};
+
+export const createClub = async (clubData) => {
+  try {
+    const response = await apiClient.post('/clubs/create-club', clubData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data.data;
+  } catch (error) {
+    throw new Error(error.response?.data?.message || 'Failed to create club');
+  }
+};
+
+export const updateClub = async (id, clubData) => {
+  try {
+    const response = await apiClient.patch(`/clubs/${id}`, clubData);
+    return response.data;
+  } catch (error) {
+    throw new Error('Failed to update club');
+  }
+};
+
+export const deleteClub = async (id) => {
+  try {
+    await apiClient.delete(`/clubs/${id}`);
+    return true;
+  } catch (error) {
+    throw new Error('Failed to delete club');
+  }
+};
+
+export const assignManagerToClub = async (clubId, userId) => {
+  try {
+    const response = await apiClient.patch(`/clubs/update-club/${clubId}`, { manager: userId });
+    return response.data;
+  } catch (error) {
+    throw new Error('Failed to assign manager');
+  }
 };
 
 // User API
 export const getUsers = async (filters = {}) => {
-  await delay(800);
-  let results = [...MOCK_USERS];
-  
-  if (filters.role) {
-    results = results.filter(u => u.role === filters.role);
+  try {
+    const response = await apiClient.get('/users', { params: filters });
+    return response.data;
+  } catch (error) {
+    throw new Error('Failed to fetch users');
   }
-  if (filters.department) {
-    results = results.filter(u => u.department === filters.department);
+};
+
+export const getUserById = async (id) => {
+  try {
+    const response = await apiClient.get(`/users/${id}`);
+    return response.data;
+  } catch (error) {
+    throw new Error('Failed to fetch user details');
   }
-  return results;
+};
+
+export const updateUser = async (id, userData) => {
+  try {
+    const response = await apiClient.put(`/users/${id}`, userData);
+    return response.data;
+  } catch (error) {
+    throw new Error('Failed to update user');
+  }
 };
 
 // Analytics API
-// export const getEventsAnalytics = async () => {
-//   await delay(1000);
-//   return {
-//     totalEvents: MOCK_EVENTS.length,
-//     upcomingEvents: MOCK_EVENTS.filter(e => e.status === 'upcoming').length,
-//     departments: MOCK_DEPARTMENTS.map(dept => ({
-//       name: dept.name,
-//       eventCount: MOCK_EVENTS.filter(e => e.department === dept.name).length
-//     }))
-//   };
-// };
-
 export const getEventsAnalytics = async () => {
-  await delay(1000);
-  
-  // Calculate mock analytics
-  const totalEvents = MOCK_EVENTS.length;
-  const upcomingEvents = MOCK_EVENTS.filter(event => event.status === 'upcoming').length;
-  const completedEvents = MOCK_EVENTS.filter(event => event.status === 'completed').length;
-  const cancelledEvents = MOCK_EVENTS.filter(event => event.status === 'cancelled').length;
-  
-  const totalParticipants = MOCK_EVENTS.reduce((sum, event) => sum + event.currentParticipants, 0);
-  const averageAttendance = totalEvents > 0 ? Math.round(totalParticipants / totalEvents) : 0;
-  
-  // Department distribution
-  const departments = [...new Set(MOCK_EVENTS.map(event => event.department))];
-  const departmentDistribution = departments.map(dept => ({
-    name: dept,
-    count: MOCK_EVENTS.filter(event => event.department === dept).length,
-  }));
-  
-  // Monthly distribution (mock data)
-  const monthlyEvents = [
-    { month: 'Jan', count: 5 },
-    { month: 'Feb', count: 8 },
-    { month: 'Mar', count: 12 },
-    { month: 'Apr', count: 15 },
-    { month: 'May', count: 10 },
-    { month: 'Jun', count: 7 },
-    { month: 'Jul', count: 9 },
-    { month: 'Aug', count: 6 },
-    { month: 'Sep', count: 11 },
-    { month: 'Oct', count: 14 },
-    { month: 'Nov', count: 8 },
-    { month: 'Dec', count: 6 },
-  ];
-  
-  return {
-    totalEvents,
-    upcomingEvents,
-    completedEvents,
-    cancelledEvents,
-    totalParticipants,
-    averageAttendance,
-    departmentDistribution,
-    monthlyEvents,
-  };
+  try {
+    const response = await apiClient.get('/analytics/events');
+    return response.data;
+  } catch (error) {
+    throw new Error('Failed to fetch events analytics');
+  }
 };
 
 export const getUsersAnalytics = async () => {
-  await delay(1000);
-  
-  // Calculate mock analytics
-  const totalUsers = MOCK_USERS.length;
-  const totalStudents = MOCK_USERS.filter(user => user.role === 'student').length;
-  const totalClubs = MOCK_USERS.filter(user => user.role === 'club').length;
-  const totalAdmins = MOCK_USERS.filter(user => user.role === 'admin').length;
-  
-  // Mock values
-  const newUsersThisMonth = 15;
-  const activeUsers = Math.floor(totalUsers * 0.8);
-  
-  // Department distribution
-  const departments = [...new Set(MOCK_USERS.filter(user => user.department).map(user => user.department))];
-  const departmentDistribution = departments.map(dept => ({
-    name: dept,
-    count: MOCK_USERS.filter(user => user.department === dept).length,
-  }));
-
-// Monthly distribution (mock data)
-const monthlyRegistrations = [
-  { month: 'Jan', count: 12 },
-  { month: 'Feb', count: 18 },
-  { month: 'Mar', count: 25 },
-  { month: 'Apr', count: 15 },
-  { month: 'May', count: 10 },
-  { month: 'Jun', count: 8 },
-  { month: 'Jul', count: 12 },
-  { month: 'Aug', count: 20 },
-  { month: 'Sep', count: 30 },
-  { month: 'Oct', count: 22 },
-  { month: 'Nov', count: 18 },
-  { month: 'Dec', count: 15 },
-];
-
-return {
-  totalUsers,
-  totalStudents,
-  totalClubs,
-  totalAdmins,
-  newUsersThisMonth,
-  activeUsers,
-  departmentDistribution,
-  monthlyRegistrations,
-};
+  try {
+    const response = await apiClient.get('/analytics/users');
+    return response.data;
+  } catch (error) {
+    throw new Error('Failed to fetch users analytics');
+  }
 };
 
 // Full Mock Data Export
@@ -313,5 +272,5 @@ export const getMockData = () => ({
   events: MOCK_EVENTS,
   clubs: MOCK_CLUBS,
   users: MOCK_USERS,
-  departments: MOCK_DEPARTMENTS
+  departments: DEPARTMENTS
 });
