@@ -1,18 +1,39 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Users, Calendar, Building2, BarChart3, Plus } from 'lucide-react';
+import { Users, Calendar, Building2, BarChart3, Plus, Loader2, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import AssignManagerModal from '@/components/admin/AssignManagerModal';
+import apiClient from '@/services/apiClient';
 
 const AdminDashboard = () => {
-  const [stats] = useState({
-    totalUsers: 1250,
-    activeEvents: 15,
-    totalClubs: 25,
-    totalRegistrations: 3500
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    activeEvents: 0,
+    completedEvents: 0,
+    totalClubs: 0,
+    totalRegistrations: 0,
   });
+  const [loading, setLoading] = useState(true);
   const [assignModalOpen, setAssignModalOpen] = useState(false);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        setLoading(true);
+        const response = await apiClient.get('/dashboard/admin');
+        if (response.data?.success) {
+          setStats(response.data.data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch admin stats:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStats();
+  }, []);
 
   const statsCards = [
     {
@@ -26,6 +47,12 @@ const AdminDashboard = () => {
       value: stats.activeEvents,
       icon: Calendar,
       color: 'bg-green-500'
+    },
+    {
+      title: 'Completed Events',
+      value: stats.completedEvents,
+      icon: CheckCircle,
+      color: 'bg-teal-500'
     },
     {
       title: 'Total Clubs',
@@ -66,26 +93,34 @@ const AdminDashboard = () => {
       </div>
       
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {statsCards.map((stat, index) => (
-          <motion.div
-            key={stat.title}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
-            className="bg-white rounded-xl shadow-sm p-6"
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">{stat.title}</p>
-                <p className="text-2xl font-semibold text-gray-900 mt-1">{stat.value}</p>
-              </div>
-              <div className={`${stat.color} p-3 rounded-lg`}>
-                <stat.icon className="h-6 w-6 text-white" />
-              </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 mb-8">
+        {loading ? (
+          Array.from({ length: 5 }).map((_, index) => (
+            <div key={index} className="bg-white rounded-xl shadow-sm p-6 flex items-center justify-center h-32">
+              <Loader2 className="h-8 w-8 text-gray-400 animate-spin" />
             </div>
-          </motion.div>
-        ))}
+          ))
+        ) : (
+          statsCards.map((stat, index) => (
+            <motion.div
+              key={stat.title}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 }}
+              className="bg-white rounded-xl shadow-sm p-6"
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">{stat.title}</p>
+                  <p className="text-2xl font-semibold text-gray-900 mt-1">{stat.value}</p>
+                </div>
+                <div className={`${stat.color} p-3 rounded-lg`}>
+                  <stat.icon className="h-6 w-6 text-white" />
+                </div>
+              </div>
+            </motion.div>
+          ))
+        )}
       </div>
 
       {/* Recent Activity */}
