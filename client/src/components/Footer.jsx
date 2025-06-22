@@ -1,105 +1,106 @@
 import { Link } from 'react-router-dom';
-import { Calendar, Mail, Github, Instagram, Twitter } from 'lucide-react';
+import { Facebook, Twitter, Instagram, Linkedin } from 'lucide-react';
 
 const Footer = () => {
-  const quickLinks = [
-    { to: "/", label: "Home" },
-    { to: "/events", label: "Events" },
-    { to: "/login", label: "Login" },
-    { to: "/register", label: "Register" }
-  ];
-
-  const resources = [
-    { to: "#", label: "Help Center" },
-    { to: "#", label: "Terms of Service" },
-    { to: "#", label: "Privacy Policy" },
-    { to: "#", label: "FAQ" }
-  ];
-
-  const socialLinks = [
-    { href: "#", icon: <Twitter className="h-6 w-6 text-white hover:text-indigo-400" />, label: "Twitter" },
-    { href: "#", icon: <Instagram className="h-6 w-6 text-white hover:text-indigo-400" />, label: "Instagram" },
-    { href: "#", icon: <Github className="h-6 w-6 text-white hover:text-indigo-400" />, label: "GitHub" }
-  ];
-
   return (
-    <footer className="bg-neutral-900 text-white py-12">
-      <div className="container mx-auto px-6">
-        {/* Footer Grid: 4 Columns */}
+    <footer className="w-full bg-card border-t border-border">
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {/* 1st Column - CampusEvents */}
-          <div>
-            <div className="flex items-center gap-3 mb-4">
-              <Calendar className="h-8 w-8 text-indigo-400" />
-              <span className="text-3xl font-semibold text-white">CampusEvents</span>
-            </div>
-            <p className="text-lg text-neutral-400">
-              Discover, participate, and manage campus events and activities with ease. Stay updated with the latest happenings!
+          {/* About Section */}
+          <div className="space-y-4">
+            <h3 className="text-foreground text-lg font-semibold">Campus Event</h3>
+            <p className="text-muted-foreground text-sm">
+              Your one-stop platform for managing and discovering college events. Connect, learn, and celebrate with your college community.
             </p>
           </div>
 
-          {/* 2nd Column - Quick Links */}
+          {/* Quick Links */}
           <div>
-            <h3 className="text-xl font-semibold mb-4 text-white">Quick Links</h3>
+            <h3 className="text-foreground text-lg font-semibold mb-4">Quick Links</h3>
             <ul className="space-y-2">
-              {quickLinks.map((link, index) => (
-                <li key={index}>
-                  <Link to={link.to} className="text-neutral-400 hover:text-indigo-400 transition-colors duration-300">
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
+              <li>
+                <Link to="/events" className="text-muted-foreground text-sm hover:text-foreground transition-colors">
+                  Browse Events
+                </Link>
+              </li>
+              <li>
+                <Link to="/create-event" className="text-muted-foreground text-sm hover:text-foreground transition-colors">
+                  Create Event
+                </Link>
+              </li>
+              <li>
+                <Link to="/profile" className="text-muted-foreground text-sm hover:text-foreground transition-colors">
+                  My Profile
+                </Link>
+              </li>
             </ul>
           </div>
 
-          {/* 3rd Column - Resources */}
+          {/* Support */}
           <div>
-            <h3 className="text-xl font-semibold mb-4 text-white">Resources</h3>
+            <h3 className="text-foreground text-lg font-semibold mb-4">Support</h3>
             <ul className="space-y-2">
-              {resources.map((resource, index) => (
-                <li key={index}>
-                  <Link to={resource.to} className="text-neutral-400 hover:text-indigo-400 transition-colors duration-300">
-                    {resource.label}
-                  </Link>
-                </li>
-              ))}
+              <li>
+                <Link to="/faq" className="text-muted-foreground text-sm hover:text-foreground transition-colors">
+                  FAQ
+                </Link>
+              </li>
+              <li>
+                <Link to="/contact" className="text-muted-foreground text-sm hover:text-foreground transition-colors">
+                  Contact Us
+                </Link>
+              </li>
+              <li>
+                <Link to="/privacy" className="text-muted-foreground text-sm hover:text-foreground transition-colors">
+                  Privacy Policy
+                </Link>
+              </li>
             </ul>
           </div>
 
-          {/* 4th Column - Follow Us & Contact */}
+          {/* Social Links */}
           <div>
-            <h3 className="text-xl font-semibold mb-4 text-white">Follow Us</h3>
-            <div className="flex gap-6 mb-6">
-              {socialLinks.map((social, index) => (
-                <a key={index} href={social.href} className="hover:text-indigo-400 transition-all duration-300">
-                  {social.icon}
-                </a>
-              ))}
-            </div>
-            <h3 className="text-xl font-semibold mb-4 text-white">Contact</h3>
-            <div className="flex items-center gap-2 text-neutral-400 text-sm">
-              <Mail className="h-4 w-4" />
-              <span>support@campusevents.com</span>
+            <h3 className="text-foreground text-lg font-semibold mb-4">Connect With Us</h3>
+            <div className="flex flex-wrap gap-4">
+              <a
+                href="https://facebook.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <Facebook className="h-5 w-5" />
+              </a>
+              <a
+                href="https://twitter.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <Twitter className="h-5 w-5" />
+              </a>
+              <a
+                href="https://instagram.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <Instagram className="h-5 w-5" />
+              </a>
+              <a
+                href="https://linkedin.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <Linkedin className="h-5 w-5" />
+              </a>
             </div>
           </div>
         </div>
 
-        {/* Footer Bottom Section - Copyright and Legal Links */}
-        <div className="border-t mt-14 border-neutral-700 pt-6 text-center flex justify-between">
-          <p className="text-md text-neutral-400">
-            © {new Date().getFullYear()} CampusEvents. All rights reserved.
-          </p>
-          <div className="flex justify-center gap-6 mt-4">
-            <Link to="#" className="text-md text-neutral-400 hover:text-indigo-400 transition-colors duration-300">
-              Privacy
-            </Link>
-            <Link to="#" className="text-md text-neutral-400 hover:text-indigo-400 transition-colors duration-300">
-              Terms
-            </Link>
-            <Link to="#" className="text-md text-neutral-400 hover:text-indigo-400 transition-colors duration-300">
-              Cookies
-            </Link>
-          </div>
+        {/* Bottom Bar */}
+        <div className="border-t border-border mt-8 pt-8 text-sm text-center text-muted-foreground">
+          <p>&copy; {new Date().getFullYear()} EventSphere. All rights reserved.</p>
         </div>
       </div>
     </footer>
