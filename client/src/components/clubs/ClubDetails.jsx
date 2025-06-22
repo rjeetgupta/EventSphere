@@ -77,6 +77,17 @@ const ClubDetails = () => {
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
+          {/* Club Image */}
+          {club.imageUrl && (
+            <div className="aspect-video relative rounded-lg overflow-hidden">
+              <img
+                src={club.imageUrl}
+                alt={club.name}
+                className="object-cover w-full h-full"
+              />
+            </div>
+          )}
+          
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
               <div className="flex items-center gap-2">

@@ -25,6 +25,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { DEPARTMENTS } from '@/constants/departments';
+import { toast } from 'sonner';
 
 const clubSchema = z.object({
   name: z.string().min(3, 'Name must be at least 3 characters'),
@@ -46,7 +47,7 @@ const ClubForm = ({ club, isEditing = false }) => {
       description: club?.description || '',
       department: club?.department || '',
       type: club?.type || '',
-      Image: null,
+      image: null,
     },
   });
 
@@ -60,7 +61,7 @@ const ClubForm = ({ club, isEditing = false }) => {
 
       // File field (image)
       if (data.image instanceof File) {
-        formData.append('Image', data.Image);
+        formData.append('Image', data.image);
       }
 
       if (isEditing) {
@@ -68,7 +69,7 @@ const ClubForm = ({ club, isEditing = false }) => {
       } else {
         await dispatch(createClub(formData)).unwrap();
       }
-
+      toast(isEditing ? 'Club updated successfully' : 'Club created successfully');
       navigate('/clubs');
     } catch (error) {
       console.error('❌ Error submitting form:', error);

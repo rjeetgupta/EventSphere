@@ -10,11 +10,15 @@ const ClubCard = ({ club }) => {
   return (
     <motion.div variants={itemVariants}>
       <Card className="h-full flex flex-col">
-        <div className="aspect-video relative">
+        <div className="h-48 relative overflow-hidden">
           <img
-            src={club.image || '/images/club-placeholder.jpg'}
-            alt={club.name}
+            src={club.imageUrl || '/images/club-placeholder.jpg'}
+            alt={club.name ? `${club.name} club` : 'Club image'}
             className="object-cover w-full h-full rounded-t-lg"
+            onError={(e) => {
+              e.target.src = '/images/club-placeholder.jpg';
+              e.target.alt = 'Club placeholder image';
+            }}
           />
         </div>
         <CardContent className="flex-grow p-4">

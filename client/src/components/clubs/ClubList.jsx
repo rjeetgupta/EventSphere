@@ -25,7 +25,6 @@ const ClubList = () => {
   useEffect(() => {
     dispatch(fetchClubs({ page: currentPage, limit: PAGE_SIZE }));
   }, [dispatch, currentPage]);
-  console.log(clubs)
 
   // clubs is the array if filtered, or an object with clubs property from API
   const clubsArray = Array.isArray(clubs)

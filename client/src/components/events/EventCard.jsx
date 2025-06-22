@@ -1,21 +1,42 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Calendar, MapPin, Users } from 'lucide-react';
+import { Calendar, MapPin, Users, Image as ImageIcon } from 'lucide-react';
 
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { itemVariants } from './constants';
 
 const EventCard = ({ event }) => {
+  // Check if imageUrl is valid (not a blob URL and not empty)
+  const isValidImageUrl = event.imageUrl && 
+    !event.imageUrl.startsWith('blob:') && 
+    event.imageUrl !== '';
+
   return (
     <motion.div variants={itemVariants}>
       <Card className="h-full flex flex-col">
-        <div className="aspect-video relative">
-          <img
-            src={event.imageUrl || '/default-event.jpg'}
-            alt={event.title}
-            className="object-cover w-full h-full rounded-t-lg"
-          />
+        <div className="h-48 relative overflow-hidden bg-gray-100">
+          {isValidImageUrl ? (
+            <img
+              src={event.imageUrl}
+              alt={event.title ? `${event.title} event` : 'Event image'}
+              className="object-cover w-full h-full rounded-t-lg"
+              onError={(e) => {
+                e.target.style.display = 'none';
+                e.target.nextSibling.style.display = 'flex';
+              }}
+            />
+          ) : null}
+          <div 
+            className={`w-full h-full rounded-t-lg flex items-center justify-center ${
+              isValidImageUrl ? 'hidden' : 'flex'
+            }`}
+          >
+            <div className="text-center text-gray-500">
+              <ImageIcon className="h-12 w-12 mx-auto mb-2 opacity-50" />
+              <p className="text-sm">No image available</p>
+            </div>
+          </div>
         </div>
         <CardContent className="flex-grow p-4">
           <h3 className="text-xl font-semibold mb-2 line-clamp-1">{event.title}</h3>

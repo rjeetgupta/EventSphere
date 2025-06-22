@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Calendar, Users } from 'lucide-react';
+import { ArrowRight, Calendar, Users, Image as ImageIcon } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { DEPARTMENTS } from '@/constants/departments';
@@ -9,46 +9,69 @@ const UpcomingEvents = ({ events = [] }) => {
   const [activeTab, setActiveTab] = useState('all');
 
   // Card Generator
-  const EventCard = ({ event }) => (
-    <div className="bg-white rounded-lg shadow-sm border overflow-hidden hover:shadow-md transition-shadow">
-      <div className="aspect-video relative overflow-hidden">
-        <img
-          src={event.imageUrl || 'https://source.unsplash.com/featured/?event'}
-          alt={event.title}
-          className="object-cover w-full h-full"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-        <div className="absolute bottom-4 left-4 right-4">
-          <h3 className="text-white font-semibold text-lg mb-1 line-clamp-1">
-            {event.title}
-          </h3>
-          <p className="text-white/90 text-sm line-clamp-2">
-            {event.description}
-          </p>
-        </div>
-      </div>
-      
-      <div className="p-4">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2 text-sm text-gray-600">
-            <Calendar className="h-4 w-4" />
-            <span>{new Date(event.date).toLocaleDateString()}</span>
+  const EventCard = ({ event }) => {
+    // Check if imageUrl is valid (not a blob URL and not empty)
+    const isValidImageUrl = event.imageUrl && 
+      !event.imageUrl.startsWith('blob:') && 
+      event.imageUrl !== '';
+
+    return (
+      <div className="bg-white rounded-lg shadow-sm border overflow-hidden hover:shadow-md transition-shadow">
+        <div className="aspect-video relative overflow-hidden bg-gray-100">
+          {isValidImageUrl ? (
+            <img
+              src={event.imageUrl}
+              alt={event.title}
+              className="object-cover w-full h-full"
+              onError={(e) => {
+                e.target.style.display = 'none';
+                e.target.nextSibling.style.display = 'flex';
+              }}
+            />
+          ) : null}
+          <div 
+            className={`w-full h-full flex items-center justify-center ${
+              isValidImageUrl ? 'hidden' : 'flex'
+            }`}
+          >
+            <div className="text-center text-gray-500">
+              <ImageIcon className="h-12 w-12 mx-auto mb-2 opacity-50" />
+              <p className="text-sm">No image</p>
+            </div>
           </div>
-          <div className="flex items-center gap-2 text-sm text-gray-600">
-            <Users className="h-4 w-4" />
-            <span>{event.currentParticipants || 0}/{event.maxParticipants || event.capacity || '∞'}</span>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+          <div className="absolute bottom-4 left-4 right-4">
+            <h3 className="text-white font-semibold text-lg mb-1 line-clamp-1">
+              {event.title}
+            </h3>
+            <p className="text-white/90 text-sm line-clamp-2">
+              {event.description}
+            </p>
           </div>
         </div>
         
-        <Button asChild className="w-full">
-          <Link to={`/events/${event._id || event.id}`}>
-            View Details
-            <ArrowRight className="h-4 w-4 ml-2" />
-          </Link>
-        </Button>
+        <div className="p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <Calendar className="h-4 w-4" />
+              <span>{new Date(event.date).toLocaleDateString()}</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <Users className="h-4 w-4" />
+              <span>{event.currentParticipants || 0}/{event.maxParticipants || event.capacity || '∞'}</span>
+            </div>
+          </div>
+          
+          <Button asChild className="w-full">
+            <Link to={`/events/${event._id || event.id}`}>
+              View Details
+              <ArrowRight className="h-4 w-4 ml-2" />
+            </Link>
+          </Button>
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   // Render events list
   const renderEventsList = (eventsList) => {
