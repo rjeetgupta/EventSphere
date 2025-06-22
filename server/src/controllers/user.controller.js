@@ -85,9 +85,23 @@ const getUserByClub = asyncHandler(async (req, res) => {
     
 })
 
+const getUsers = asyncHandler(async (req, res) => {
+    const { departmentName, role } = req.query;
+    let query = {};
+    if (departmentName) {
+        query.departmentName = departmentName;
+    }
+    if (role) {
+        query.role = role;
+    }
+    const users = await User.find(query).select('-password');
+    return res.status(200).json(new ApiResponse(200, users, 'Users fetched successfully'));
+});
+
 export {
     getUser,
     changeCurrentPassword,
     updateUserProfile,
     getUserByClub,
+    getUsers,
 }

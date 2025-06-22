@@ -4,6 +4,7 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 import Club from '../models/club.model.js';
 import User from '../models/user.model.js';
 import { ROLES } from '../middlewares/checkRole.middleware.js';
+import { uploadOnCloudinary } from '../utils/cloudinary.js';
 
 // Create a new club
 const createClub = asyncHandler(async (req, res) => {
@@ -13,6 +14,18 @@ const createClub = asyncHandler(async (req, res) => {
         type,
         departmentName
     } = req.body;
+
+    // taking image
+    const clubImage = req.file?.Image[0]?.path;
+
+    if(!clubImage){
+        throw new ApiError(400, "Club Image is required");
+    }
+
+    // upload on cloudinary 
+    const image = await uploadOnCloudinary(clubImage)
+    console.log(image.url)
+    console.log(image.url)
 
     // Check if club already exists
     const existingClub = await Club.findOne({ name });
@@ -36,7 +49,8 @@ const createClub = asyncHandler(async (req, res) => {
         name,
         description,
         type,
-        departmentName
+        departmentName,
+        image: image.url,
     });
 
     return res

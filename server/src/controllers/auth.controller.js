@@ -133,7 +133,6 @@ const loginUser = asyncHandler(async (req, res) => {
 // Logout user
 const logoutUser = asyncHandler(async (req, res) => {
     const userId = req.user._id;
-
     // Find user and update refreshToken to undefined
     const user = await User.findByIdAndUpdate(
         userId,
@@ -146,6 +145,7 @@ const logoutUser = asyncHandler(async (req, res) => {
             new: true
         }
     );
+
 
     if (!user) {
         throw new ApiError(404, "User not found");

@@ -23,6 +23,10 @@ const clubSchema = new mongoose.Schema({
         required: [true, 'Department name is required'],
         enum: ['MBA', 'MCA', 'BCA', 'BBA', 'B.COM', 'B.SC', 'BA']
     },
+    imageUrl: {
+        type: String, // Cloudinary URL
+        required: false,
+    },
     manager: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
@@ -39,7 +43,16 @@ const clubSchema = new mongoose.Schema({
     isActive: {
         type: Boolean,
         default: true
-    }
+    },
+    status: {
+        type: String,
+        enum: ['active', 'inactive'],
+        default: 'active'
+    },
+    achievements: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'ClubAchievement'
+    }]
 }, {
     timestamps: true
 });

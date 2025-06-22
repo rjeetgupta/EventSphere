@@ -10,6 +10,7 @@ import { validator } from "../middlewares/validator.middleware.js";
 import { checkRole } from "../middlewares/checkRole.middleware.js";
 import { ROLES } from "../middlewares/checkRole.middleware.js";
 import { createClubValidator, updateClubValidator } from "../validators/club.validator.js";
+import { upload } from "../middlewares/multer.middleware.js";
 
 // import { validateObjectId } from "../middlewares/validator.middleware.js";
 
@@ -25,9 +26,10 @@ router.use(verifyJWT);
 // Club creation routes (admin, super-admin, and club manager)
 router.route("/create-club")
     .post(
-        checkRole([ROLES.ADMIN, ROLES.SUPER_ADMIN, ROLES.CLUB_MANAGER]), 
-        createClubValidator, 
-        validator, 
+        checkRole([ROLES.ADMIN, ROLES.SUPER_ADMIN, ROLES.CLUB_MANAGER]),
+        upload.single('image'),
+        createClubValidator,
+        validator,
         createClub
     );
 

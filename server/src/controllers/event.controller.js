@@ -17,9 +17,22 @@ const createEvent = asyncHandler(async (req, res) => {
         capacity,
         registrationDeadline,
         category,
-        imageUrl,
-        clubId
+        clubId,
     } = req.body;
+
+    // taking image
+    const eventImageLocalPath = req.files?.Image?.[0]?.path;
+
+    if (!eventImageLocalPath) {
+        throw new ApiError(400, "Event Image is required");
+    }
+
+    // upload on cloudinary
+    const image = await uploadOnCloudinary(eventImageLocalPath);
+
+    if (!image?.url) {
+        throw new ApiError(500, "Failed to upload image to Cloudinary");
+    }
 
     // Create event
     const event = await Event.create({
@@ -31,31 +44,19 @@ const createEvent = asyncHandler(async (req, res) => {
         capacity,
         registrationDeadline,
         category,
-        imageUrl,
+        imageUrl: image.url,
         createdBy: req.user._id,
-        club: clubId
+        club: clubId,
     });
 
     return res
         .status(201)
-        .json(
-            new ApiResponse(
-                201,
-                event,
-                "Event created successfully"
-            )
-        );
+        .json(new ApiResponse(201, event, "Event created successfully"));
 });
 
 // Get all events with filters
 const getEvents = asyncHandler(async (req, res) => {
-    const {
-        category,
-        date,
-        search,
-        page = 1,
-        limit = 10
-    } = req.query;
+    const { category, date, search, page = 1, limit = 10 } = req.query;
 
     const query = {};
 
@@ -71,15 +72,15 @@ const getEvents = asyncHandler(async (req, res) => {
     }
     if (search) {
         query.$or = [
-            { title: { $regex: search, $options: 'i' } },
-            { description: { $regex: search, $options: 'i' } }
+            { title: { $regex: search, $options: "i" } },
+            { description: { $regex: search, $options: "i" } },
         ];
     }
 
     // Get events with pagination
     const events = await Event.find(query)
-        .populate('createdBy', 'name email')
-        .populate('club', 'name')
+        .populate("createdBy", "name email")
+        .populate("club", "name")
         .sort({ date: 1 })
         .skip((page - 1) * limit)
         .limit(limit);
@@ -87,28 +88,26 @@ const getEvents = asyncHandler(async (req, res) => {
     // Get total count for pagination
     const total = await Event.countDocuments(query);
 
-    return res
-        .status(200)
-        .json(
-            new ApiResponse(
-                200,
-                {
-                    events,
-                    total,
-                    page: parseInt(page),
-                    totalPages: Math.ceil(total / limit)
-                },
-                "Events retrieved successfully"
-            )
-        );
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            {
+                events,
+                total,
+                page: parseInt(page),
+                totalPages: Math.ceil(total / limit),
+            },
+            "Events retrieved successfully"
+        )
+    );
 });
 
 // Get event by ID
 const getEventById = asyncHandler(async (req, res) => {
     const event = await Event.findById(req.params.id)
-        .populate('createdBy', 'name email')
-        .populate('club', 'name')
-        .populate('registeredUsers', 'name email');
+        .populate("createdBy", "name email")
+        .populate("club", "name")
+        .populate("registeredUsers", "name email");
 
     if (!event) {
         throw new ApiError(404, "Event not found");
@@ -116,13 +115,7 @@ const getEventById = asyncHandler(async (req, res) => {
 
     return res
         .status(200)
-        .json(
-            new ApiResponse(
-                200,
-                event,
-                "Event retrieved successfully"
-            )
-        );
+        .json(new ApiResponse(200, event, "Event retrieved successfully"));
 });
 
 // Update event
@@ -143,18 +136,13 @@ const updateEvent = asyncHandler(async (req, res) => {
         req.params.id,
         { $set: req.body },
         { new: true }
-    ).populate('createdBy', 'name email')
-     .populate('club', 'name');
+    )
+        .populate("createdBy", "name email")
+        .populate("club", "name");
 
     return res
         .status(200)
-        .json(
-            new ApiResponse(
-                200,
-                updatedEvent,
-                "Event updated successfully"
-            )
-        );
+        .json(new ApiResponse(200, updatedEvent, "Event updated successfully"));
 });
 
 // Delete event
@@ -175,13 +163,7 @@ const deleteEvent = asyncHandler(async (req, res) => {
 
     return res
         .status(200)
-        .json(
-            new ApiResponse(
-                200,
-                null,
-                "Event deleted successfully"
-            )
-        );
+        .json(new ApiResponse(200, null, "Event deleted successfully"));
 });
 
 // Register for event
@@ -197,34 +179,44 @@ const registerForEvent = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Registration deadline has passed");
     }
 
+    // Check if event status allows registration
+    if (event.status !== "upcoming") {
+        throw new ApiError(
+            400,
+            "Registration is only open for upcoming events"
+        );
+    }
+
     // Check if event is full
-    if (event.registrations.length >= event.capacity) {
+    if (event.registeredUsers.length >= event.capacity) {
         throw new ApiError(400, "Event is full");
     }
 
     // Check if user is already registered
-    const isRegistered = event.registrations.some(
-        reg => reg.user.toString() === req.user._id.toString()
+    const isRegistered = event.registeredUsers.some(
+        (userId) => userId.toString() === req.user._id.toString()
     );
 
     if (isRegistered) {
         throw new ApiError(400, "Already registered for this event");
     }
 
-    // Add registration
-    event.registrations.push({
-        user: req.user._id,
-        registeredAt: new Date()
-    });
-
+    // Add user to registeredUsers array
+    event.registeredUsers.push(req.user._id);
     await event.save();
+
+    // Populate the updated event with user details
+    const updatedEvent = await Event.findById(req.params.id)
+        .populate("createdBy", "name email")
+        .populate("club", "name")
+        .populate("registeredUsers", "name email");
 
     return res
         .status(200)
         .json(
             new ApiResponse(
                 200,
-                null,
+                updatedEvent,
                 "Successfully registered for event"
             )
         );
@@ -239,24 +231,30 @@ const cancelRegistrationFromEvent = asyncHandler(async (req, res) => {
     }
 
     // Check if user is registered
-    const registrationIndex = event.registrations.findIndex(
-        reg => reg.user.toString() === req.user._id.toString()
+    const userIndex = event.registeredUsers.findIndex(
+        (userId) => userId.toString() === req.user._id.toString()
     );
 
-    if (registrationIndex === -1) {
+    if (userIndex === -1) {
         throw new ApiError(400, "Not registered for this event");
     }
 
-    // Remove registration
-    event.registrations.splice(registrationIndex, 1);
+    // Remove user from registeredUsers array
+    event.registeredUsers.splice(userIndex, 1);
     await event.save();
+
+    // Populate the updated event with user details
+    const updatedEvent = await Event.findById(req.params.id)
+        .populate("createdBy", "name email")
+        .populate("club", "name")
+        .populate("registeredUsers", "name email");
 
     return res
         .status(200)
         .json(
             new ApiResponse(
                 200,
-                null,
+                updatedEvent,
                 "Successfully unregistered from event"
             )
         );
@@ -264,8 +262,10 @@ const cancelRegistrationFromEvent = asyncHandler(async (req, res) => {
 
 // Get event registrations (admin only)
 const getEventRegistrations = asyncHandler(async (req, res) => {
-    const event = await Event.findById(req.params.id)
-        .populate('registrations.user', 'name email studentId');
+    const event = await Event.findById(req.params.id).populate(
+        "registrations.user",
+        "name email studentId"
+    );
 
     if (!event) {
         throw new ApiError(404, "Event not found");
@@ -284,18 +284,20 @@ const getEventRegistrations = asyncHandler(async (req, res) => {
 
 // Get event attendance (admin only)
 const getEventAttendance = asyncHandler(async (req, res) => {
-    const event = await Event.findById(req.params.id)
-        .populate('registrations.user', 'name email studentId');
+    const event = await Event.findById(req.params.id).populate(
+        "registrations.user",
+        "name email studentId"
+    );
 
     if (!event) {
         throw new ApiError(404, "Event not found");
     }
 
-    const attendance = event.registrations.map(reg => ({
+    const attendance = event.registrations.map((reg) => ({
         user: reg.user,
         registeredAt: reg.registeredAt,
         attended: reg.attended || false,
-        attendedAt: reg.attendedAt
+        attendedAt: reg.attendedAt,
     }));
 
     return res
@@ -318,5 +320,5 @@ export {
     registerForEvent,
     cancelRegistrationFromEvent,
     getEventRegistrations,
-    getEventAttendance
+    getEventAttendance,
 };

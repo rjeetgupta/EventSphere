@@ -10,6 +10,7 @@ import {
     changeCurrentPassword, 
     updateUserProfile, 
     getUserByClub,
+    getUsers,
 } from "../controllers/user.controller.js";
 
 const router = Router();
@@ -22,6 +23,9 @@ router.use(verifyJWT);
 router.route("/profile")
     .get(getUser)
     .patch(updateUserProfile);
+
+// Get all users (optionally filter by departmentName)
+router.route("/").get(getUsers);
 
 router.route("/change-password")
     .patch(changePasswordValidator, validator, changeCurrentPassword);
