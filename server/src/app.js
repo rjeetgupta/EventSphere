@@ -14,6 +14,7 @@ import clubRoutes from './routes/club.route.js';
 import clubMemberRoutes from './routes/clubMember.route.js';
 import clubResourceRoutes from './routes/clubResource.route.js';
 import clubAchievementRoutes from './routes/clubAchievement.route.js';
+import dashboardRouter from './routes/dashboard.route.js';
 
 const app = express();
 
@@ -45,6 +46,7 @@ app.use('/api/v1/clubs', clubRoutes);
 app.use('/api/v1/club-members', clubMemberRoutes);
 app.use('/api/v1/club-resources', clubResourceRoutes);
 app.use('/api/v1/club-achievements', clubAchievementRoutes);
+app.use('/api/v1/dashboard', dashboardRouter);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -53,6 +55,7 @@ app.get('/health', (req, res) => {
 
 // Error handling middleware
 app.use((err, req, res, next) => {
+    console.error(err.stack);
     if (err instanceof ApiError) {
         return res.status(err.statusCode).json({
             success: false,
