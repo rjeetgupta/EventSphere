@@ -5,6 +5,7 @@ import Event from "../models/event.model.js";
 import User from "../models/user.model.js";
 import { ROLES } from "../middlewares/checkRole.middleware.js";
 import Club from "../models/club.model.js";
+import { uploadOnCloudinary } from "../utils/cloudinary.js";
 
 // Create a new event
 const createEvent = asyncHandler(async (req, res) => {
@@ -20,18 +21,17 @@ const createEvent = asyncHandler(async (req, res) => {
         clubId,
     } = req.body;
 
-    // taking image
+       // taking image
     const eventImageLocalPath = req.files?.Image?.[0]?.path;
-
-    if (!eventImageLocalPath) {
+    if(!eventImageLocalPath){
         throw new ApiError(400, "Event Image is required");
     }
-
-    // upload on cloudinary
-    const image = await uploadOnCloudinary(eventImageLocalPath);
-
+    console.log(eventImageLocalPath)
+    // upload on cloudinary 
+    const image = await uploadOnCloudinary(eventImageLocalPath)
+    console.log(image)
     if (!image?.url) {
-        throw new ApiError(500, "Failed to upload image to Cloudinary");
+        throw new ApiError(500, "Failed to upload image, please try again.");
     }
 
     // Create event

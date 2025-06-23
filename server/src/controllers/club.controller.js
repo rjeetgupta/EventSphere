@@ -16,16 +16,17 @@ const createClub = asyncHandler(async (req, res) => {
     } = req.body;
 
     // taking image
-    const clubImage = req.file?.Image[0]?.path;
-
+    const clubImage = req.file?.path;
     if(!clubImage){
         throw new ApiError(400, "Club Image is required");
     }
 
     // upload on cloudinary 
     const image = await uploadOnCloudinary(clubImage)
-    console.log(image.url)
-    console.log(image.url)
+
+    if (!image?.url) {
+        throw new ApiError(500, "Failed to upload image, please try again.");
+    }
 
     // Check if club already exists
     const existingClub = await Club.findOne({ name });
@@ -50,7 +51,13 @@ const createClub = asyncHandler(async (req, res) => {
         description,
         type,
         departmentName,
-        image: image.url,
+        imageUrl: image.url,
+    });
+
+    console.log('Created club:', {
+        name: club.name,
+        imageUrl: club.imageUrl,
+        id: club._id
     });
 
     return res

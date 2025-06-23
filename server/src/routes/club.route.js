@@ -27,7 +27,7 @@ router.use(verifyJWT);
 router.route("/create-club")
     .post(
         checkRole([ROLES.ADMIN, ROLES.SUPER_ADMIN, ROLES.CLUB_MANAGER]),
-        upload.single('image'),
+        upload.single('Image'),
         createClubValidator,
         validator,
         createClub

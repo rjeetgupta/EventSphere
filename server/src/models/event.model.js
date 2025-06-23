@@ -38,7 +38,7 @@ const eventSchema = new mongoose.Schema(
             required: [true, "Venue is required"],
             trim: true,
         },
-        Image: {
+        imageUrl: {
             type: String,
             required: function() { return this.isNew; }
         },
@@ -62,10 +62,6 @@ const eventSchema = new mongoose.Schema(
             type: String,
             required: [true, "Category is required"],
             enum: ["technical", "cultural", "sports", "other"],
-        },
-        imageUrl: {
-            type: String,
-            default: "default-event.jpg",
         },
         requirements: [
             {
