@@ -55,7 +55,10 @@ export const createEvent = createAsyncThunk(
   async (eventData, { rejectWithValue }) => {
     try {
       console.log('Creating event with data:', eventData);
-      const response = await apiClient.post('/events/create-event', eventData);
+      
+      const response = await apiClient.post('/events/create-event', eventData, {
+        headers: {},
+      });
       console.log('Create event response:', response.data);
       // Extract data from ApiResponse format
       return response.data?.data || response.data;

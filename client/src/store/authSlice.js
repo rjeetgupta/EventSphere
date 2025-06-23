@@ -13,7 +13,7 @@ const initialState = {
   loading: false,
   error: null,
 };
-console.log("this is " , initialState);
+
 
 // Helper function to set auth headers
 const getAuthHeaders = () => {
@@ -79,8 +79,7 @@ export const logout = createAsyncThunk(
       // ✅ Just clear localStorage and cookies
       localStorage.removeItem("token");
       localStorage.removeItem("accessToken");
-      
-      console.log('ye work')
+
       return true;
     } catch (error) {
       return rejectWithValue("Client-side logout failed");
@@ -95,7 +94,6 @@ export const logout = createAsyncThunk(
 export const changePassword = createAsyncThunk(
   "auth/changePassword",
   async (passwordData, { getState, rejectWithValue }) => {
-    console.log(passwordData);
     try {
       const { token } = getState().auth;
       const res = await apiClient.patch(
@@ -140,10 +138,8 @@ const authSlice = createSlice({
     },
     loadUserFromToken: (state) => {
       const token = localStorage.getItem("token");
-      console.log('this is token', token)
       if (token) {
         const user = getUserFromToken(token);
-        console.log("thi is user", user)
         if (user) {
           state.user = user;
           state.role = user.role;
@@ -166,7 +162,6 @@ const authSlice = createSlice({
       .addCase(login.fulfilled, (state, { payload }) => {
         state.loading = false;
         state.user = payload.data.user;
-        console.log("this is user", payload.data.user)
         state.role = payload.data.user.role;
         state.isAuthenticated = true;
         localStorage.setItem("accessToken", payload.data.accessToken);

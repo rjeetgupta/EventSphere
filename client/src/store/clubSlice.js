@@ -7,7 +7,6 @@ export const fetchClubs = createAsyncThunk(
   async (filters, { rejectWithValue }) => {
     try {
       const response = await apiClient.get('/clubs', { params: filters });
-      console.log(response.data.data);
       return response.data.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Failed to fetch clubs');
@@ -20,7 +19,6 @@ export const fetchClubById = createAsyncThunk(
   async (id, { rejectWithValue }) => {
     try {
       const response = await apiClient.get(`/clubs/${id}`);
-      console.log(response.data);
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Failed to fetch club');
@@ -32,8 +30,9 @@ export const createClub = createAsyncThunk(
   'clubs/createClub',
   async (clubData, { rejectWithValue }) => {
     try {
-      console.log(clubData);
-      const response = await apiClient.post('/clubs/create-club', clubData );
+      const response = await apiClient.post('/clubs/create-club', clubData, {
+        headers: {},
+      });
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Failed to create club');
@@ -46,9 +45,7 @@ export const updateClub = createAsyncThunk(
   async ({ id, clubData }, { rejectWithValue }) => {
     try {
       const response = await apiClient.patch(`/clubs/${id}`, clubData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+        headers: {},
       });
       return response.data;
     } catch (error) {
