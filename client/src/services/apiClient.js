@@ -1,10 +1,11 @@
 import axios from 'axios';
+import { logout } from '@/store/authSlice';
 
 // Use relative URL for API requests to work with the proxy
 const API_URL = '/api/v1';
 
 const apiClient = axios.create({
-  baseURL: '/api/v1',
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api/v1',
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
@@ -18,6 +19,12 @@ apiClient.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    
+    // If data is FormData, remove Content-Type header to let browser set it
+    if (config.data instanceof FormData) {
+      delete config.headers['Content-Type'];
+    }
+    
     return config;
   },
   (error) => {
@@ -25,34 +32,23 @@ apiClient.interceptors.request.use(
   }
 );
 
-// Add a response interceptor
-apiClient.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    const originalRequest = error.config;
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
-      try {
-        const refreshToken = localStorage.getItem('refreshToken');
-        if (!refreshToken) {
-          throw new Error('No refresh token available');
-        }
-        // Try to refresh the token
-        const response = await axios.post('/api/v1/auth/refresh-token', { refreshToken });
-        const { accessToken, refreshToken: newRefreshToken } = response.data;
-        localStorage.setItem('accessToken', accessToken);
-        localStorage.setItem('refreshToken', newRefreshToken);
-        originalRequest.headers.Authorization = `Bearer ${accessToken}`;
-        return apiClient(originalRequest);
-      } catch (refreshError) {
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
+export const setupInterceptors = (store) => {
+  apiClient.interceptors.response.use(
+    (response) => response,
+    (error) => {
+      const { status, data } = error.response || {};
+
+      // Check for token expiration or unauthorized errors
+      if (status === 401 || status === 403 || data?.message === 'jwt expired') {
+        // Dispatch logout action
+        store.dispatch(logout());
+        // Redirect to login page
         window.location.href = '/login';
-        return Promise.reject(refreshError);
       }
+
+      return Promise.reject(error);
     }
-    return Promise.reject(error);
-  }
-);
+  );
+}
 
 export default apiClient; 
