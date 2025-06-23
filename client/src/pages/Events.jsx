@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { Calendar, MapPin, Users, Search, Filter, ChevronDown, Clock } from 'lucide-react';
+import { Calendar, MapPin, Users, Search, Filter, ChevronDown, Clock, Image as ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -156,6 +156,33 @@ const Events = () => {
                     </div>
                     <CardTitle className="text-lg line-clamp-2">{event.title}</CardTitle>
                   </CardHeader>
+                  
+                  {/* Event Image */}
+                  <div className="px-6 pb-3">
+                    <div className="h-48 relative overflow-hidden bg-gray-100 rounded-lg">
+                      {event.imageUrl && !event.imageUrl.startsWith('blob:') ? (
+                        <img
+                          src={event.imageUrl}
+                          alt={event.title ? `${event.title} event` : 'Event image'}
+                          className="object-cover w-full h-full"
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                            e.target.nextSibling.style.display = 'flex';
+                          }}
+                        />
+                      ) : null}
+                      <div 
+                        className={`w-full h-full flex items-center justify-center ${
+                          event.imageUrl && !event.imageUrl.startsWith('blob:') ? 'hidden' : 'flex'
+                        }`}
+                      >
+                        <div className="text-center text-gray-500">
+                          <ImageIcon className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                          <p className="text-sm">No image available</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                   
                   <CardContent className="pb-3">
                     <p className="text-gray-600 text-sm line-clamp-3 mb-4">

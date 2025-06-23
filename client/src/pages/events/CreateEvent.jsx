@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { motion } from 'framer-motion';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { fetchClubs, selectClubs } from '@/store/clubSlice';
 
 import { createEvent } from '@/store/eventSlice';
@@ -47,7 +47,6 @@ const CreateEvent = () => {
   const dispatch = useDispatch();
   const { loading, error } = useSelector((state) => state.events);
   const clubs = useSelector(selectClubs);
-  const [imageFile, setImageFile] = useState(null);
 
   useEffect(() => {
     dispatch(fetchClubs());
@@ -71,23 +70,24 @@ const CreateEvent = () => {
 
   const onSubmit = async (data) => {
     try {
-      let imageUrl = '';
-      if (data.image && data.image instanceof File) {
-        imageUrl = URL.createObjectURL(data.image);
+      const formData = new FormData();
+      formData.append('title', data.title);
+      formData.append('description', data.description);
+      formData.append('date', data.date);
+      formData.append('time', data.time);
+      formData.append('venue', data.venue);
+      formData.append('capacity', data.capacity);
+      formData.append('registrationDeadline', data.registrationDeadline);
+      formData.append('category', data.category);
+      formData.append('clubId', data.club);
+
+      // File field (image)
+      if (data.image instanceof File) {
+        formData.append('Image', data.image);
       }
-      const payload = {
-        title: data.title,
-        description: data.description,
-        date: data.date,
-        time: data.time,
-        venue: data.venue,
-        capacity: Number(data.capacity),
-        registrationDeadline: data.registrationDeadline,
-        category: data.category,
-        clubId: data.club,
-        imageUrl,
-      };
-      await dispatch(createEvent(payload)).unwrap();
+
+      await dispatch(createEvent(formData)).unwrap();
+      toast.success('Event created successfully!');
       navigate('/events');
     } catch (error) {
       console.error('Failed to create event:', error);
@@ -251,10 +251,11 @@ const CreateEvent = () => {
                 <FormItem>
                   <FormLabel>Event Image</FormLabel>
                   <FormControl>
-                    <Input type="file" accept="image/*" onChange={e => {
-                      setImageFile(e.target.files[0]);
-                      field.onChange(e.target.files[0]);
-                    }} />
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => field.onChange(e.target.files[0])}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

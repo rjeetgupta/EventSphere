@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { motion } from 'framer-motion';
-import { Calendar, MapPin, Users, Clock, Edit, Trash2 } from 'lucide-react';
+import { Calendar, MapPin, Users, Clock, Edit, Trash2, Image as ImageIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { ROLES } from '@/constants/roles';
 
@@ -132,6 +132,33 @@ const EventDetails = () => {
               )}
             </div>
           </CardHeader>
+          
+          {/* Event Image */}
+          <div className="px-6">
+            <div className="h-64 relative overflow-hidden bg-gray-100 rounded-lg">
+              {event.imageUrl && !event.imageUrl.startsWith('blob:') ? (
+                <img
+                  src={event.imageUrl}
+                  alt={event.title ? `${event.title} event` : 'Event image'}
+                  className="object-cover w-full h-full"
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                    e.target.nextSibling.style.display = 'flex';
+                  }}
+                />
+              ) : null}
+              <div 
+                className={`w-full h-full flex items-center justify-center ${
+                  event.imageUrl && !event.imageUrl.startsWith('blob:') ? 'hidden' : 'flex'
+                }`}
+              >
+                <div className="text-center text-gray-500">
+                  <ImageIcon className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                  <p className="text-lg">No image available</p>
+                </div>
+              </div>
+            </div>
+          </div>
           
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
