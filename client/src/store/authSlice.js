@@ -3,17 +3,15 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import apiClient from "@/services/apiClient";
 import { ROLES } from "@/constants/roles";
-import * as jwtDecode from "jwt-decode";
 import Cookies from "js-cookie";
 
 const initialState = {
-  user: localStorage.getItem("user") || null,
-  isAuthenticated: localStorage.getItem("token") ? true : false,
-  role: null,
+  user: JSON.parse(localStorage.getItem("user")) || null,
+  isAuthenticated: !!localStorage.getItem("accessToken"),
+  role: JSON.parse(localStorage.getItem("user"))?.role || null,
   loading: false,
   error: null,
 };
-
 
 // Helper function to set auth headers
 const getAuthHeaders = () => {
@@ -26,7 +24,7 @@ export const register = createAsyncThunk(
   async (userData, { rejectWithValue }) => {
     try {
       const res = await apiClient.post("/auth/register", userData);
-      return { ...res.data, role: "student" };
+      return { ...res.data, role: ROLES.STUDENT };
     } catch (error) {
       return rejectWithValue(
         error.response?.data?.message || "Registration failed"
@@ -50,58 +48,30 @@ export const login = createAsyncThunk(
   }
 );
 
-// export const logout = createAsyncThunk(
-//   "auth/logout",
-//   async (role, { rejectWithValue }) => {
-//     console.log(role);
-//     try {
-//       // const endpoint =
-//       //   role === ROLES.ADMIN ? "/admin/logout-admin" : "/auth/logout";
-//       const token = localStorage.getItem("accessToken");
-
-//       if (token) {
-//         await apiClient.post('/auth/logout', {
-//           headers: { Authorization: `Bearer ${token}` },
-//         });
-//       }
-
-//       return true;
-//     } catch (error) {
-//       return rejectWithValue(error.response?.data?.message || "Logout failed");
-//     }
-//   }
-// );
-
 export const logout = createAsyncThunk(
   "auth/logout",
   async (_, { rejectWithValue }) => {
     try {
-      // ✅ Just clear localStorage and cookies
-      localStorage.removeItem("token");
       localStorage.removeItem("accessToken");
-
+      localStorage.removeItem("refreshToken");
+      localStorage.removeItem("user");
+      Cookies.remove("token");
       return true;
-    } catch (error) {
+    } catch {
       return rejectWithValue("Client-side logout failed");
     }
   }
 );
 
-
-
 // Change Password
-
 export const changePassword = createAsyncThunk(
   "auth/changePassword",
-  async (passwordData, { getState, rejectWithValue }) => {
+  async (passwordData, { rejectWithValue }) => {
     try {
-      const { token } = getState().auth;
       const res = await apiClient.patch(
         "/users/change-password",
         passwordData,
-        {
-          headers: getAuthHeaders(token),
-        }
+        { headers: getAuthHeaders() }
       );
       return res.data;
     } catch (error) {
@@ -112,22 +82,15 @@ export const changePassword = createAsyncThunk(
   }
 );
 
-const getUserFromToken = (token) => {
-  try {
-    return jwtDecode.default(token);
-  } catch {
-    return null;
-  }
-};
-
 const authSlice = createSlice({
   name: "auth",
   initialState,
   reducers: {
     setCredentials: (state, { payload }) => {
       state.user = payload.user;
-      state.role = payload.role;
+      state.role = payload.user.role;
       state.isAuthenticated = true;
+      localStorage.setItem("user", JSON.stringify(payload.user));
     },
     clearCredentials: (state) => {
       state.user = null;
@@ -135,26 +98,24 @@ const authSlice = createSlice({
       state.isAuthenticated = false;
       localStorage.removeItem("accessToken");
       localStorage.removeItem("refreshToken");
+      localStorage.removeItem("user");
     },
     loadUserFromToken: (state) => {
-      const token = localStorage.getItem("token");
-      if (token) {
-        const user = getUserFromToken(token);
-        if (user) {
-          state.user = user;
-          state.role = user.role;
-          state.isAuthenticated = true;
-        } else {
-          state.user = null;
-          state.role = null;
-          state.isAuthenticated = false;
-        }
+      const storedUser = JSON.parse(localStorage.getItem("user"));
+      if (storedUser) {
+        state.user = storedUser;
+        state.role = storedUser.role;
+        state.isAuthenticated = true;
+      } else {
+        state.user = null;
+        state.role = null;
+        state.isAuthenticated = false;
       }
     },
   },
   extraReducers: (builder) => {
     builder
-      // Login cases
+      // Login
       .addCase(login.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -164,22 +125,22 @@ const authSlice = createSlice({
         state.user = payload.data.user;
         state.role = payload.data.user.role;
         state.isAuthenticated = true;
+
         localStorage.setItem("accessToken", payload.data.accessToken);
-        localStorage.setItem("token", payload.data.refreshToken);
+        localStorage.setItem("refreshToken", payload.data.refreshToken);
         localStorage.setItem("user", JSON.stringify(payload.data.user));
       })
       .addCase(login.rejected, (state, { payload }) => {
         state.loading = false;
         state.error = payload;
       })
-      // Logout cases
+      // Logout
       .addCase(logout.fulfilled, (state) => {
         state.user = null;
         state.role = null;
         state.isAuthenticated = false;
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("refreshToken");
       })
+      // Register
       .addCase(register.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -187,15 +148,15 @@ const authSlice = createSlice({
       .addCase(register.fulfilled, (state, { payload }) => {
         state.loading = false;
         state.user = payload.user;
-        state.role = "student";
+        state.role = ROLES.STUDENT;
         state.isAuthenticated = true;
+        localStorage.setItem("user", JSON.stringify(payload.user));
       })
       .addCase(register.rejected, (state, { payload }) => {
         state.loading = false;
         state.error = payload;
       })
-
-      // change password
+      // Change Password
       .addCase(changePassword.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -213,9 +174,11 @@ const authSlice = createSlice({
 
 export const { setCredentials, clearCredentials, loadUserFromToken } =
   authSlice.actions;
+
 export const selectCurrentUser = (state) => state.auth.user;
 export const selectIsAuthenticated = (state) => state.auth.isAuthenticated;
 export const selectAuthLoading = (state) => state.auth.loading;
 export const selectAuthError = (state) => state.auth.error;
 export const selectUserRole = (state) => state.auth.role;
+
 export default authSlice.reducer;
