@@ -1,9 +1,7 @@
 import { Routes, Route } from 'react-router-dom';
-import { useSelector, useDispatch } from 'react-redux';
+
 import { Toaster } from 'sonner';
 import { ROLES } from '@/constants/authConstants';
-import { selectCurrentUser, selectIsAuthenticated, loadUserFromToken } from '@/store/authSlice';
-import { useEffect } from 'react';
 
 // Layouts
 import MainLayout from '@/components/layout/MainLayout';
@@ -47,13 +45,6 @@ import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import AuthGuard from '@/components/auth/AuthGuard';
 
 function App() {
-  const dispatch = useDispatch();
-  const isAuthenticated = useSelector(selectIsAuthenticated);
-  const user = useSelector(selectCurrentUser);
-
-  useEffect(() => {
-    dispatch(loadUserFromToken());
-  }, [dispatch]);
 
   return (
     <>

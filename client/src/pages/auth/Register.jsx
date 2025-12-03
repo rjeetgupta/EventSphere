@@ -1,87 +1,150 @@
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { z } from "zod"
-import { Button } from "@/components/ui/button"
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
-import { useDispatch } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
-import { register } from "@/store/authSlice"
-import { toast } from "sonner"
+import React, { useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate, Link } from 'react-router-dom';
+import { Loader2, UserPlus, Eye, EyeOff } from 'lucide-react';
+import { toast } from 'sonner';
+
+import { register, clearError, selectAuthLoading, selectAuthError } from '@/store/authSlice';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardFooter,
+  CardDescription,
+} from '@/components/ui/card';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '@/components/ui/select';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { DEPARTMENTS } from '@/constants/departments';
 
-// Zod validation schema
-const formSchema = z.object({
-  name: z.string().min(2, {
-    message: "Name must be at least 2 characters.",
-  }),
-  email: z.string().email({
-    message: "Please enter a valid email.",
-  }),
-  studentId: z.string().min(5, {
-    message: "Student ID must be at least 5 characters.",
-  }),
-  departmentName: z.string().min(1, {
-    message: "Please select a department.",
-  }),
-  password: z.string().min(8, {
-    message: "Password must be at least 8 characters.",
-  }),
-  confirmPassword: z.string(),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ["confirmPassword"],
-})
+const registerSchema = z
+  .object({
+    name: z
+      .string()
+      .min(2, 'Name must be at least 2 characters')
+      .max(50, 'Name must not exceed 50 characters')
+      .regex(/^[a-zA-Z\s]+$/, 'Name should only contain letters and spaces'),
+    email: z
+      .string()
+      .min(1, 'Email is required')
+      .email('Please enter a valid email address')
+      .toLowerCase(),
+    studentId: z
+      .string()
+      .min(5, 'Student ID must be at least 5 characters')
+      .max(20, 'Student ID must not exceed 20 characters')
+      .regex(/^[a-zA-Z0-9-]+$/, 'Student ID can only contain letters, numbers, and hyphens'),
+    departmentName: z
+      .string()
+      .min(1, 'Please select a department'),
+    password: z
+      .string()
+      .min(8, 'Password must be at least 8 characters')
+      .max(100, 'Password is too long')
+      .regex(
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
+        'Password must contain at least one uppercase letter, one lowercase letter, and one number'
+      ),
+    confirmPassword: z.string().min(1, 'Please confirm your password'),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ['confirmPassword'],
+  });
 
 export default function Register() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const loading = useSelector(selectAuthLoading);
+  const error = useSelector(selectAuthError);
 
-  // Form definition
+  const [showPassword, setShowPassword] = React.useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
+
   const form = useForm({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(registerSchema),
     defaultValues: {
-      name: "",
-      email: "",
-      studentId: "",
-      departmentName: "",
-      password: "",
-      confirmPassword: "",
+      name: '',
+      email: '',
+      studentId: '',
+      departmentName: '',
+      password: '',
+      confirmPassword: '',
     },
-  })
+  });
+
+  // Clear error when component unmounts
+  useEffect(() => {
+    return () => {
+      dispatch(clearError());
+    };
+  }, [dispatch]);
 
   async function onSubmit(values) {
-    console.log(values)
-    // Handle form submission
     try {
-      const result = await dispatch(register(values)).unwrap();
+      // Remove confirmPassword before sending to API
+      const { confirmPassword, ...registrationData } = values;
 
-      toast.success(`You are registered successfully`);
-      navigate("/login", { replace: true });
-    } catch (error) {
-      console.error('Registration error:', error);
-      toast.error(error || 'Registration failed. Please try again.');
+      await dispatch(register(registrationData)).unwrap();
+
+      toast.success('Registration Successful!', {
+        description: 'Your account has been created. Please sign in.',
+      });
+
+      // Adding Small delay for better UX
+      setTimeout(() => {
+        navigate('/login', { replace: true });
+      }, 500);
+    } catch (err) {
+      // Error is handled by Redux and displayed in UI
+      console.error('Registration error:', err);
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-background text-foreground">
-      <Card className="w-full max-w-4xl"> {/* Increased max width */}
-        <CardHeader className="flex flex-row justify-between items-center">
-          <CardTitle className="text-xl md:text-2xl text-center w-full">
-            Student Registration Form
-          </CardTitle>
+    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background via-background to-muted/20">
+      <Card className="w-full max-w-4xl shadow-lg">
+        <CardHeader className="text-center space-y-2">
+          <div className="mx-auto w-12 h-12 bg-primary rounded-full flex items-center justify-center mb-2">
+            <UserPlus className="w-6 h-6 text-primary-foreground" />
+          </div>
+          <CardTitle className="text-3xl font-bold">Create Account</CardTitle>
+          <CardDescription className="text-base">
+            Register as a new student to get started
+          </CardDescription>
         </CardHeader>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
-            <CardContent className="space-y-4 md:space-y-0">
+            <CardContent className="space-y-6">
+              {error && (
+                <Alert variant="destructive">
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Left Column */}
                 <div className="space-y-4">
-                  {/* Name Field */}
                   <FormField
                     control={form.control}
                     name="name"
@@ -89,29 +152,37 @@ export default function Register() {
                       <FormItem>
                         <FormLabel>Full Name</FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter your full name" {...field} />
+                          <Input
+                            placeholder="John Doe"
+                            disabled={loading}
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
 
-                  {/* Email Field */}
                   <FormField
                     control={form.control}
                     name="email"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Email</FormLabel>
+                        <FormLabel>Email Address</FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter your email" {...field} />
+                          <Input
+                            type="email"
+                            placeholder="john.doe@university.edu"
+                            autoComplete="email"
+                            disabled={loading}
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
 
-                  {/* Student ID Field */}
                   <FormField
                     control={form.control}
                     name="studentId"
@@ -119,7 +190,11 @@ export default function Register() {
                       <FormItem>
                         <FormLabel>Student ID</FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter your student ID" {...field} />
+                          <Input
+                            placeholder="STU-12345"
+                            disabled={loading}
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -129,22 +204,27 @@ export default function Register() {
 
                 {/* Right Column */}
                 <div className="space-y-4">
-                  {/* Department Field */}
                   <FormField
                     control={form.control}
                     name="departmentName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Department Name</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormLabel>Department</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                          disabled={loading}
+                        >
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Select a department" />
+                              <SelectValue placeholder="Select your department" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
                             {DEPARTMENTS.map((dept) => (
-                              <SelectItem key={dept} value={dept}>{dept}</SelectItem>
+                              <SelectItem key={dept} value={dept}>
+                                {dept}
+                              </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
@@ -153,7 +233,6 @@ export default function Register() {
                     )}
                   />
 
-                  {/* Password Field */}
                   <FormField
                     control={form.control}
                     name="password"
@@ -161,14 +240,35 @@ export default function Register() {
                       <FormItem>
                         <FormLabel>Password</FormLabel>
                         <FormControl>
-                          <Input type="password" placeholder="Enter password" {...field} />
+                          <div className="relative">
+                            <Input
+                              type={showPassword ? 'text' : 'password'}
+                              placeholder="Create a strong password"
+                              autoComplete="new-password"
+                              disabled={loading}
+                              {...field}
+                            />
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                              onClick={() => setShowPassword(!showPassword)}
+                              disabled={loading}
+                            >
+                              {showPassword ? (
+                                <EyeOff className="h-4 w-4 text-muted-foreground" />
+                              ) : (
+                                <Eye className="h-4 w-4 text-muted-foreground" />
+                              )}
+                            </Button>
+                          </div>
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
 
-                  {/* Confirm Password Field */}
                   <FormField
                     control={form.control}
                     name="confirmPassword"
@@ -176,7 +276,29 @@ export default function Register() {
                       <FormItem>
                         <FormLabel>Confirm Password</FormLabel>
                         <FormControl>
-                          <Input type="password" placeholder="Confirm password" {...field} />
+                          <div className="relative">
+                            <Input
+                              type={showConfirmPassword ? 'text' : 'password'}
+                              placeholder="Re-enter your password"
+                              autoComplete="new-password"
+                              disabled={loading}
+                              {...field}
+                            />
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                              disabled={loading}
+                            >
+                              {showConfirmPassword ? (
+                                <EyeOff className="h-4 w-4 text-muted-foreground" />
+                              ) : (
+                                <Eye className="h-4 w-4 text-muted-foreground" />
+                              )}
+                            </Button>
+                          </div>
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -186,14 +308,34 @@ export default function Register() {
               </div>
             </CardContent>
 
-            <CardFooter className="w-full flex flex-col items-center gap-4 pt-6">
-              <Button type="submit" className="w-full md:w-1/2">
-                Register
+            <CardFooter className="flex flex-col space-y-4">
+              <Button type="submit" className="w-full md:w-2/3 mx-auto" size="lg" disabled={loading}>
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Creating your account...
+                  </>
+                ) : (
+                  <>
+                    <UserPlus className="mr-2 h-4 w-4" />
+                    Register
+                  </>
+                )}
               </Button>
+
+              <div className="text-sm text-center text-muted-foreground">
+                Already have an account?{' '}
+                <Link
+                  to="/login"
+                  className="font-semibold text-primary hover:text-primary/90 underline-offset-4 hover:underline"
+                >
+                  Sign in here
+                </Link>
+              </div>
             </CardFooter>
           </form>
         </Form>
       </Card>
     </div>
-  )
+  );
 }
