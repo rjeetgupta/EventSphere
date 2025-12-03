@@ -32,6 +32,8 @@ app.use(express.urlencoded({ extended: true, limit: '16kb' }));
 app.use(express.static("public"));
 app.use(cookieParser());
 
+app.set('trust proxy', 1);
+
 // Rate limiting
 app.use('/api/auth/login', loginLimiter);
 app.use('/api/auth/register', registerLimiter);
